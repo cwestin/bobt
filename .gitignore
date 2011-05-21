@@ -1,0 +1,18 @@
+# ignore emacs backup files
+*~
+
+# conmpiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+*.a
+
+# packages
+*.tar
+*.gz
+*.zip
+*.jar
+*.war
