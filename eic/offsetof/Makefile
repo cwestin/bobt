@@ -1,7 +1,10 @@
-
+EXECUTABLES = testc testcpp
 DEBUG = -g
 
-all:	testc testcpp
+all:	$(EXECUTABLES)
+
+clean:
+	rm ls$(EXECUTABLES)
 
 testc:	testc.c
 

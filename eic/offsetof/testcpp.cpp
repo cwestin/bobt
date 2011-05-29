@@ -15,6 +15,10 @@ class Bar
 public:
   void printOffsets() const;
 
+  static void staticPrintOffsets();
+
+  static const int offsets[];
+
   Bar(int &z);
 private:
   int x;
@@ -41,6 +45,18 @@ void Bar::printOffsets() const
   //cout << "offsetof(Bar, z) == " << myOffsetOf(Bar, z) << endl;
 }
 
+void Bar::staticPrintOffsets()
+{
+  cout << "static offsetof(Bar, x) == " << myOffsetOf(Bar, x) << endl;
+  cout << "static offsetof(Bar, y) == " << myOffsetOf(Bar, y) << endl;
+}
+
+const int Bar::offsets[] =
+{
+  myOffsetOf(Bar, x),
+  myOffsetOf(Bar, y),
+};  
+
 int main()
 {
   cout << "offsetof(Foo, a) == " << offsetof(Foo, a) << endl;
@@ -50,6 +66,10 @@ int main()
   int z = 42;
   Bar bar(z);
   bar.printOffsets();
+
+  Bar::staticPrintOffsets();
+
+  // cout << "non-member offsetof(Bar, y) == " << myOffsetOf(Bar, y) << endl;
 
   return 0;
 }
