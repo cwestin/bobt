@@ -1,0 +1,5 @@
+name = Sections and Page Table of Contents
+description = Support nestable sections, converting section titles to H tags and optionally adding those to a local table of contents.
+
+core = 7.x
+scripts[] = sectiontoc.js
