@@ -9,6 +9,9 @@ To use, simply mark up authored text with <div> and <span> tags as follows:
 
 ----
 
+<!-- surround the body of content with this -->
+<div id="sectiontoc-body">
+
 <!-- place this empty placeholder where you want the node's toc to go -->
 <div id="sectiontoc-toc"></div>
 
@@ -24,5 +27,7 @@ To use, simply mark up authored text with <div> and <span> tags as follows:
 </div>
 
 </div>
+
+</div> <!-- sectiontoc-body -->
 
 ----
