@@ -32,7 +32,7 @@
 		    var titleName = this.makeHeadingName($(titleSpan).text());
 
 		    /* add the link to the toc li */
-		    $('<a />').text(titleHtml).attr( {
+		    $('<a />').html(titleHtml).attr( {
 			    'href': '#' + titleName }).
    		        appendTo(childLi);
 
