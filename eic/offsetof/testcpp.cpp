@@ -1,3 +1,9 @@
+/* Copyright 2011 Chris Westin.  All rights reserved. */
+/*
+  Example for discussion from "Using offsetof()," from "The Book of Brilliant
+  Things:"  https://www.bookofbrilliantthings.com/eic/offsetof
+ */
+
 #include <cstddef>
 #include <iostream>
 
