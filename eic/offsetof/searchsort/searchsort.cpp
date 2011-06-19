@@ -112,7 +112,7 @@ int main()
     pStudent = (const Student *)
 	bsearch<Student, unsigned, offsetof(Student, key)>(
 	    &keyStudent, enrolled, sizeof(enrolled)/sizeof(Student),
-	    compareUnsigned);
+	    compare<unsigned>);
 
     if (pStudent)
     {
@@ -124,8 +124,7 @@ int main()
     unsigned keyProfessor = 11;
     pProfessor = (const Professor *)
 	bsearch<Professor, unsigned, offsetof(Professor, key)>(
-	    &keyProfessor, faculty, sizeof(faculty)/sizeof(Professor),
-	    compareUnsigned);
+	    &keyProfessor, faculty, sizeof(faculty)/sizeof(Professor));
 
     if (pProfessor)
     {

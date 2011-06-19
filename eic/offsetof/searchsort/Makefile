@@ -1,4 +1,4 @@
-EXECUTABLES = searchsort tcompare
+EXECUTABLES = searchsort
 DEBUG = -ggdb
 PHOENIX4CPP = ../../../../phoenix4cpp
 
@@ -15,7 +15,3 @@ clean:
 
 searchsort:	searchsort.cpp
 	$(CC) $(CFLAGS) -o $@ $< -Wl,-l:$(LIBRARY)
-
-tcompare:	tcompare.cpp
-	$(CC) $(CFLAGS) -o $@ $< -Wl,-l:$(LIBRARY)
-
