@@ -7,6 +7,7 @@
 *.dll
 *.exe
 *.o
+*.obj
 *.so
 *.a
 
@@ -14,5 +15,6 @@
 *.tar
 *.gz
 *.zip
+*.rpm
 *.jar
 *.war
