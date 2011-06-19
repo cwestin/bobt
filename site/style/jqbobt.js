@@ -1,6 +1,12 @@
 (function ($) {
 
     $(document).ready(function () {
+	    var pathname = $(location).attr('pathname');
+
+	    if ((pathname === null) || (pathname.length === 0) ||
+		(pathname === '/'))
+		return;
+
 	    var stoc = {
 		init: function() {
 		    /* we need a sequence number for any duplicate headings */

@@ -4,6 +4,13 @@
 	attach: function (context, settings) {
 
 	    $(document).ready(function () {
+		    /* don't do this on the front page */
+		    var pathname = $(location).attr('pathname');
+		    if ((pathname === null) || (pathname.length === 0) ||
+			(pathname === '/'))
+			return;
+
+		    /* define the object we'll use to do the work */
 		    var stoc = {
 			init: function() {
 			    /* a sequence number for any duplicate headings */
