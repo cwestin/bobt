@@ -7,7 +7,7 @@
 		    /* don't do this on the front page */
 		    var pathname = $(location).attr('pathname');
 		    if ((pathname === null) || (pathname.length === 0) ||
-			(pathname === '/'))
+			(pathname === '/') || (pathname === '/node'))
 			return;
 
 		    /* define the object we'll use to do the work */
