@@ -1,6 +1,10 @@
 # ignore emacs backup files
 *~
 
+# ignore eclipse project files
+.project
+.cproject
+
 # conmpiled source
 *.com
 *.class

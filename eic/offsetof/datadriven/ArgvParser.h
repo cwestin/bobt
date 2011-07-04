@@ -10,16 +10,18 @@
 #ifndef ARGV_PARSER_H
 #define ARGV_PARSER_H
 
+#include <cstddef>
+
 class ArgvParser
 {
 public:
 
     enum ArgType
     {
-	typeBool = 1;
-	typeString = 2;
-	typeInt = 2;
-    }
+	typeBool = 1,
+	typeString = 2,
+	typeInt = 3,
+    };
 
     static const unsigned optionMulti = 0x00000001;
     /*
@@ -40,11 +42,21 @@ public:
     struct StringArg
     {
 	struct StringArg *pNext;
-	const char *const pArg;
+	const char *pArg;
     };
 
-    static bool parse(void *pSink, const Descriptor *pDescriptor, size_t nDesc,
+    class Error
+    {
+    public:
+	virtual ~Error() {};
+	virtual void report(const Descriptor *pD, const char *pMsg) = 0;
+    };
+
+    static bool parse(void *pSink, Error *pError,
+		      const Descriptor *pDescriptor, size_t nDesc,
 		      int argc, const char *const argv[]);
+
+    static void clean(void *pSink, const Descriptor *pDescriptor, size_t nDesc);
 };
 
 #endif // ARGV_PARSER_H

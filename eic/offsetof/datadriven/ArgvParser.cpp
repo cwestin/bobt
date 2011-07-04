@@ -8,17 +8,21 @@
 #include "ArgvParser.h"
 
 #include <cassert>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include "bsearch.h"
 
 using namespace phoenix4cpp;
 
-static void reverseStringList(StringArg **ppList)
+static void reverseStringList(ArgvParser::StringArg **ppList)
 {
-    StringArg *pNew = NULL;
+    ArgvParser::StringArg *pNew = NULL;
     while(*ppList != NULL)
     {
 	/* take one off the list */
-	StringArg *pTemp = *ppList;
+	ArgvParser::StringArg *pTemp = *ppList;
 	*ppList = pTemp->pNext;
 
 	/* add it to the new list */
@@ -31,52 +35,151 @@ static void reverseStringList(StringArg **ppList)
 }
 
 static void addStringArg(
-    char *pSink, const Descriptor *pD, const char *const pArg)
+    char *pSink, const ArgvParser::Descriptor *pD, const char *const pArg)
 {
-    StringArg *pNewArg = new StringArg;
+    ArgvParser::StringArg *pNewArg = new ArgvParser::StringArg;
     pNewArg->pArg = pArg;
 
-    StringArg **ppList = (StringArg **)(pSink + pD->offset);
+    ArgvParser::StringArg **ppList =
+	(ArgvParser::StringArg **)(pSink + pD->offset);
     pNewArg->pNext = *ppList;
     *ppList = pNewArg;
 }
 
-static bool processArgument(char *pSink, const Descriptor *const pDesc,
-			    int argc, char *argv[], unsigned iArg)
+static void reportError(ArgvParser::Error *pError,
+			const ArgvParser::Descriptor *pDesc, const char *pMsg)
 {
-    $$$;
+    char optionbuf[128];
+    char buf[256];
+
+    if (pDesc->shortName[0])
+    {
+	if (pDesc->pLongName)
+	    snprintf(optionbuf, sizeof(optionbuf),
+		     "the -%s/--%s", pDesc->shortName,
+		     pDesc->pLongName);
+	else
+	    snprintf(optionbuf, sizeof(optionbuf),
+		     "the -%s", pDesc->shortName);
+    }
+    else
+	snprintf(optionbuf, sizeof(optionbuf),
+		 "the --%s", pDesc->pLongName);
+
+    snprintf(buf, sizeof(buf), "%s option %s", optionbuf, pMsg);
+    pError->report(pDesc, buf);
 }
 
-bool ArgvParser::parse(void *pS, const Descriptor *const pDesc, const size_t nD,
+static bool processArgument(char *pSink, ArgvParser::Error *pError,
+			    const ArgvParser::Descriptor *const pDesc,
+			    int argc, const char *const argv[], unsigned iArg)
+{
+    switch(pDesc->argType)
+    {
+    case ArgvParser::typeBool:
+	*(bool *)(pSink + pDesc->offset) = true;
+	return false;
+
+    case ArgvParser::typeString:
+	/* we expect a follow-on argument */
+	if (iArg + 1 >= (unsigned)argc)
+	{
+	    reportError(pError, pDesc, "requires a follow-on argument");
+	    return false;
+	}
+
+	if (pDesc->options & ArgvParser::optionMulti)
+	    addStringArg(pSink, pDesc, argv[iArg + 1]);
+	else
+	{
+	    const char **ppS = (const char **)(pSink + pDesc->offset);
+	    if (*ppS)
+		reportError(pError, pDesc, "is specified more than once");
+	    *(const char **)(pSink + pDesc->offset) = argv[iArg + 1];
+	}
+
+	return true;
+	
+    case ArgvParser::typeInt:
+    {
+	/* we expect a follow-on argument */
+	if (iArg + 1 >= (unsigned)argc)
+	{
+	    reportError(pError, pDesc, "requires a follow-on argument");
+	    return false;
+	}
+
+	const char *pN = argv[iArg + 1];
+	for(const char *pC = pN; *pC; ++pC)
+	{
+	    if (!isdigit(*pC))
+	    {
+		reportError(pError, pDesc, "requires an integer argument");
+		return true;
+	    }
+	}
+
+	*(int *)(pSink + pDesc->offset) = atoi(pN);
+	return true;
+    }
+    }
+
+    /* NOTREACHED */
+    return false;
+}
+
+bool ArgvParser::parse(void *pS, Error *pError,
+		       const Descriptor *const pDesc, const size_t nD,
 		       int argc, const char *const argv[])
 {
     char *pSink = (char *)pS; /* make pointer arithmetic easier for setting */
     const Descriptor *pNakedDesc = NULL;
-    const Descriptor *pCharIndex[256];
 
     /* loop variables we reuse */
+    const Descriptor **ppD;
     const Descriptor *pD;
     int i;
 
+    /* an index into the descriptors by short name character */
+    const Descriptor *pCharIndex[256];
+
     /* initialize the character option index */
-    for(pD = pCharIndex; i = sizeof(pCharIndex)/sizeof(Descriptor *); i;
-	++pD, --i)
-	*pD = NULL;
+    for(ppD = pCharIndex, i = sizeof(pCharIndex)/sizeof(Descriptor *);
+	i; ++ppD, --i)
+	*ppD = NULL;
 
     /* make an initial pass over the descriptor to initialize things */
-    for(pD = pDesc; i = nD; i; ++pD, --i)
+    for(pD = pDesc, i = nD; i; ++pD, --i)
     {
+	/* make sure the long names are sorted alphabetically */
+	if ((unsigned)i < nD) /* skip checking the first item */
+	{
+	    if (!pD->pLongName)
+	    {
+		/* if there's no longname, the previous one can't have one */
+		assert(!pD[-1].pLongName);
+	    }
+	    else
+	    {
+		/* if there is a long name, then the prior must be empty, or
+		   less then it */
+		assert(!pD[-1].pLongName ||
+		       (strcmp(pD[-1].pLongName, pD->pLongName) < 0));
+	    }
+	}
+
 	/* build an index for the single character options */
 	if (pD->shortName[0] != '\0')
 	{
 	    const char c = pD->shortName[0];
-	    assert(!pCharIndex[c]); /* this option used twice */
+	    assert(!pCharIndex[(int)c]); /* this option used twice */
 	    assert(isprint(c) && !isspace(c));/* should be a usable character */
 	    pCharIndex[(unsigned)c] = pD;
 	}
 
 	/* have we got a place to gather naked arguments? */
-	if (!pD->pLongName && (pD->shortName[0] == '\0'))
+	if (!pD->pLongName && (pD->shortName[0] == '\0') &&
+	    (pD->argType == typeString) && (pD->options & optionMulti))
 	{
 	    assert(!pNakedDesc); /* two naked descriptors supplied */
 	    pNakedDesc = pD;
@@ -94,7 +197,7 @@ bool ArgvParser::parse(void *pS, const Descriptor *const pDesc, const size_t nD,
 	    if (pD->options & optionMulti)
 		*(StringArg **)(pSink + pD->offset) = NULL;
 	    else
-		*(char **)(pSink + pD->offset) = NULL;
+		*(const char **)(pSink + pD->offset) = NULL;
 	    break;
 
 	case typeInt:
@@ -127,7 +230,10 @@ bool ArgvParser::parse(void *pS, const Descriptor *const pDesc, const size_t nD,
 	/* is it just a lone hyphen? */
 	if (pArg[1] == '\0')
 	{
-	    error(i);
+	    char buf[128];
+	    sprintf(buf, "option %d is missing a short name", i);
+	    pError->report(NULL, buf);
+	    continue;
 	}
 
 	/* is it a long-name argument? */
@@ -136,17 +242,28 @@ bool ArgvParser::parse(void *pS, const Descriptor *const pDesc, const size_t nD,
 	    /* is the argument name missing? */
 	    if (pArg[2] == '\0')
 	    {
-		error(argv, i);
+		char buf[128];
+		sprintf(buf, "option %d is missing a long name", i);
+		pError->report(NULL, buf);
+		continue;
 	    }
 
 	    /* find it in the descriptor array */
+	    const char *const pKey = &pArg[2];
 	    const Descriptor *pArgDesc =
 		bsearch<Descriptor, charstar, offsetof(Descriptor, pLongName)>(
-		    &pArg[2], pDesc, nD);
+		    &pKey, pDesc, nD);
 	    if (!pArgDesc)
-		error(argv, i);
+	    {
+		char buf[128];
+		snprintf(buf, sizeof(buf),
+			 "unknown option %s", pArg);
+		pError->report(NULL, buf);
+		continue;
+	    }
 				     
-	    bool twosie = processArgument(pSink, pArgDesc, argc, argv, i);
+	    bool twosie = processArgument(pSink, pError,
+					  pArgDesc, argc, argv, i);
 	    if (twosie)
 		++i;
 	}
@@ -158,12 +275,15 @@ bool ArgvParser::parse(void *pS, const Descriptor *const pDesc, const size_t nD,
 	    const Descriptor *pArgDesc = pCharIndex[(unsigned)*pC];
 	    if (!pArgDesc)
 	    {
-		error(argv, i);
+		char buf[32];
+		sprintf(buf, "unknown option %c", *pC);
+		pError->report(NULL, buf);
+		continue;
 	    }
 
 	    if (pArgDesc->argType == typeBool)
 	    {
-		*(bool *)(pSink + pD->offset) = true;
+		*(bool *)(pSink + pArgDesc->offset) = true;
 		continue;
 	    }
 
@@ -177,17 +297,19 @@ bool ArgvParser::parse(void *pS, const Descriptor *const pDesc, const size_t nD,
 	     */
 	    if (pC[1] != '\0')
 	    {
-		error(argv, i);
+		reportError(pError, pArgDesc, "requires a follow-on argument");
+		continue;
 	    }
 
-	    bool twosie = processArgument(pSink, pArgDesc, argc, argv, i);
+	    bool twosie = processArgument(pSink, pError,
+					  pArgDesc, argc, argv, i);
 	    if (twosie)
 		++i;
 	}
     }
 
     /* make a final pass through the descriptors to finish up */
-    for(pD = pDesc; i = nD; i; ++pD, --i)
+    for(pD = pDesc, i = nD; i; ++pD, --i)
     {
 	/* do we need to reverse the list? */
 	if (pD->options & optionMulti)
@@ -196,4 +318,28 @@ bool ArgvParser::parse(void *pS, const Descriptor *const pDesc, const size_t nD,
 
     /* if we got here, everything went ok */
     return true;
+}
+
+void ArgvParser::clean(void *pS, const Descriptor *pDesc, size_t nDesc)
+{
+    for(size_t i = nDesc; i; --i)
+    {
+	if ((pDesc->argType == typeString) &&
+	    (pDesc->options & optionMulti))
+	{
+	    StringArg **ppSA = (StringArg **)(((char *)pS) + pDesc->offset);
+	    StringArg *pSA;
+	    while((pSA = *ppSA))
+	    {
+		/*
+		  Remove the first item from the list and delete it.
+
+		  Note we don't delete the string it points to, because these
+		  came from argv, and we don't own them.
+		*/
+		*ppSA = pSA->pNext;
+		delete pSA;
+	    }
+	}
+    }
 }
