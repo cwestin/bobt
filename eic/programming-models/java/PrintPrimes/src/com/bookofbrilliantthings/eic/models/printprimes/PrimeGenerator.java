@@ -1,19 +1,23 @@
 package com.bookofbrilliantthings.eic.models.printprimes;
 
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class PrimeGenerator
 {
-	static Vector<Long> primes = new Vector<Long>();
+	private static final AtomicReference<Vector<Long>> primesRef =
+		new AtomicReference<Vector<Long>>(new Vector<Long>());
 	static
 	{
+		final Vector<Long> primes = primesRef.get();
 		primes.add(new Long(1));
 		primes.add(new Long(2));
 		primes.add(new Long(3));
 	}
 	
-	static void generate(LongSink longSink, int n)
+	public static void generate(LongSink longSink, int n)
 	{
+		Vector<Long> primes = primesRef.get();
 		int avail = primes.size();
 		int count = 0;
 		long lastPrime = 0;
@@ -30,6 +34,10 @@ public class PrimeGenerator
 		/* if we've seen everything we wanted to, quit */
 		if (count == n)
 			return;
+		
+		/* since we're going to be adding new elements to the shared Vector<>, clone it */
+		Vector<Long> original = primes;
+		primes = new Vector<Long>(original);
 		
 		/* find and emit candidates until we're done */
 		while(count < n)
@@ -61,6 +69,21 @@ public class PrimeGenerator
 					break;
 				}
 			}
+		}
+		
+		/* before we quit, replace the vector if appropriate */
+		while(!primesRef.compareAndSet(original, primes))
+		{
+			/*
+			 If the compareAndSet failed, someone else got there first.  We'll
+			 check and see what they put there.    If the vector there has more
+			 primes than we've found, we'll quit.  But if we've extended the vector
+			 more than whoever else did, then we'll try again.  Whoever did the most
+			 work wins.
+			 */
+			original = primesRef.get();
+			if (original.size() >= avail)
+				return;
 		}
 	}
 }
