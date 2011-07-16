@@ -4,6 +4,8 @@
 # ignore eclipse project files
 .project
 .cproject
+.metadata
+.classpath
 
 # conmpiled source
 *.com
