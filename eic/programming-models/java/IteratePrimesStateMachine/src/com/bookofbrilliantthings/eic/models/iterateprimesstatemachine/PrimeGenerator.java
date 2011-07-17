@@ -87,10 +87,10 @@ public class PrimeGenerator
 		public Long next()
 		{
 			if (!calledHas)
-				throw new IllegalStateException();
+				throw new IllegalStateException("hasNext() has not been called");
 			
 			if (count >= n)
-				throw new NoSuchElementException();
+				throw new NoSuchElementException("hasNext() has returned false");
 			
 			calledHas = false;
 			
@@ -141,7 +141,7 @@ public class PrimeGenerator
 		public void remove()
 		{
 			/* you can't remove elements from this generated list */
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("cannot remove elements from a generated list");
 		}
 	}
 

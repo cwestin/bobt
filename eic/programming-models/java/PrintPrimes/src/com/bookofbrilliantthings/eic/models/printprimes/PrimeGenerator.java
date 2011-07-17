@@ -23,7 +23,7 @@ public class PrimeGenerator
 		long lastPrime = 0;
 		for(; count < n; ++count)
 		{
-			/* if we're past all the available precomputed values, quit */
+			/* if we're past all the available pre-computed values, quit */
 			if (count >= avail)
 				break;
 			
