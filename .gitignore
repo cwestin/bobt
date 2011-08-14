@@ -6,6 +6,7 @@
 .cproject
 .metadata
 .classpath
+.settings
 
 # conmpiled source
 *.com
