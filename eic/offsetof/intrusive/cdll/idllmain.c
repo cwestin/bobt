@@ -7,22 +7,22 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "idll.h"
+#include <pxlibDll.h>
 
 
 typedef struct myitem
 {
     unsigned x;
-    idll link;
+    pxlibDllMember link;
 } myitem;
 
 
 int main()
 {
-    idll list;
+    pxlibDllList list;
 
     /* initialize the list */
-    idllInit(&list);
+    pxlibDllListInit(&list);
 
     /* add a bunch of members to the tail of the list */
     unsigned i;
@@ -32,29 +32,30 @@ int main()
 	myitem *pitem = (myitem *)malloc(sizeof(myitem));
 
 	/* initialize the membership */
-	idllInit(&pitem->link);
+	pxlibDllMemberInit(&pitem->link);
 
 	/* set the value */
 	pitem->x = i;
 
 	/* append it to the list */
-	idllAppend(&list, &pitem->link);
+	pxlibDllAppend(&list, &pitem->link);
     }
 
     /* print out the list members */
-    idll *pm;
-    for(pm = idllFirst(&list); pm; pm = idllNext(&list, pm))
+    pxlibDllMember *pMember;
+    for(pMember = pxlibDllFirst(&list); pMember;
+	pMember = pxlibDllNext(&list, pMember))
     {
-	myitem *pitem = idllMember(pm, myitem, link);
+	myitem *pitem = pxlibDllGetMember(pMember, myitem, link);
 	printf("%u ", pitem->x);
     }
     printf("\n");
 
     /* free all list elements to clean up */
-    while((pm = idllFirst(&list)))
+    while((pMember = pxlibDllFirst(&list)))
     {
-	myitem *pitem = idllMember(pm, myitem, link);
-	idllRemove(pm);
+	myitem *pitem = pxlibDllGetMember(pMember, myitem, link);
+	pxlibDllRemove(pMember);
 	free(pitem);
     }
 
