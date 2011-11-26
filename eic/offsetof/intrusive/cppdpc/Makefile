@@ -1,4 +1,4 @@
-EXECUTABLES = idllmain
+EXECUTABLES = dpcmain
 DEBUG = -ggdb
 #OPTIMIZER = -O3
 PHOENIX4CPP = ../../../../../phoenix4cpp
@@ -14,5 +14,8 @@ all:	$(EXECUTABLES)
 clean:
 	-rm $(EXECUTABLES) *~ *.o *.exe
 
-idllmain:	idllmain.cpp $(INCLUDE)/DoublyLinked.h $(LIBRARY)
-	$(CC) $(CFLAGS) -o $@ $< -Wl,-l:$(LIBRARY)
+HashMap.o:	HashMap.cpp HashMap.h
+	$(CC) $(CFLAGS) -c $<
+
+dpcmain:	dpcmain.cpp HashMap.o $(INCLUDE)/DoublyLinked.h $(LIBRARY)
+	$(CC) $(CFLAGS) -o $@ $< HashMap.o -Wl,-l:$(LIBRARY)

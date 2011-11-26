@@ -2,7 +2,7 @@
 /*
   Example for discussion from "Intrusive Data Structures," from
   "The Book of Brilliant Things:"
-  https://www.bookofbrilliantthings.com/eic/offsetof/intrusive
+  https://www.bookofbrilliantthings.com/eic/offsetof/intrusive-data-structures
  */
 
 #include <cstddef>
