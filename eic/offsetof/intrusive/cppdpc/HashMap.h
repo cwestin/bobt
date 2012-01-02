@@ -78,6 +78,10 @@ namespace bookofbrilliantthings
 	    HashMapMember *pList;
 	};
 
+	HashMapMember *findInBucket(
+	    Bucket *pB, unsigned long hashValue, const void *pKey,
+	    HashMapMember *pNew, Factory *pFactory);
+
 	Bucket *pBucket;
 	size_t nBuckets;
 	size_t nItems;

@@ -130,7 +130,7 @@ namespace bookofbrilliantthings
 	/* copy the lists */
 	size_t iBucket = nBuckets;
 	for(Bucket *pNB = pNewBucket, *pNB2 = pNB + nBuckets,
-		*pOB = pBucket; iBucket; ++pNB, ++pOB, --iBucket)
+		*pOB = pBucket; iBucket; ++pNB, ++pOB, ++pNB2, --iBucket)
 	{
 	    /* copy the list from the old bucket array to the new */
 	    pNB->pList = pOB->pList;
@@ -139,19 +139,29 @@ namespace bookofbrilliantthings
 	    pNB2->pList = NULL;
 
 	    /*
-	      Find the trailing parts of the list that go on the new
+	      Find the elements on this list that go on the new
 	      second half of the bucket array.
 	    */
-	    for(HashMapMember **ppM = &pNB->pList; *ppM;
-		ppM = &(*ppM)->pNext)
+	    for(HashMapMember **ppM = &pNB->pList; *ppM;)
 	    {
-		/* move the rest of the list */
-		if ((*ppM)->hashValue >= newN)
+		/*
+		  This item should only move if it uses the uppermost bit of the
+		  new mask.
+		*/
+		if (!((*ppM)->hashValue & nBuckets))
 		{
-		    pNB2->pList = *ppM;
-		    *ppM = NULL;
-		    break;
+		    /* advance along the list */
+		    ppM = &(*ppM)->pNext;
+		    continue;
 		}
+
+		/* remove the item from it's current location */
+		HashMapMember *pM = *ppM;
+		*ppM = (*ppM)->pNext;
+
+		findInBucket(pNB2, pM->hashValue,
+			     ((const char *)pM) - memberOffset + keyOffset, pM,
+			     NULL);
 	    }
 	}
 
@@ -161,6 +171,48 @@ namespace bookofbrilliantthings
 	nBuckets = newN;
     }
 
+    HashMapMember *HashMapGeneric::findInBucket(
+	Bucket *pB, unsigned long hashValue, const void *pKey,
+	HashMapMember *pNew, Factory *pFactory)
+    {
+	HashMapMember **ppM;
+
+	for(ppM = &pB->pList; *ppM; ppM = &(*ppM)->pNext)
+	{
+	    if ((*ppM)->hashValue == hashValue)
+	    {
+		const void *pLeft =
+		    (const void *)(((char *)(*ppM)) - memberOffset + keyOffset);
+		int cmp = pCmp->compare(pLeft, pKey);
+		if (cmp == 0)
+		    return *ppM;
+
+		if (cmp > 0)
+		    break;
+	    }
+
+	    if ((*ppM)->hashValue > hashValue)
+		break;
+	}
+
+	if (!pNew)
+	{
+	    /* if we got here, there was no match for the key */
+	    if (!pFactory)
+		return NULL;
+
+	    pNew = pFactory->create();
+	    pNew->hashValue = hashValue;
+	    ++nItems;
+	}
+
+	/* link the new item into the bucket list at the place found above */
+	pNew->pNext = *ppM;
+	*ppM = pNew;
+
+	return pNew;
+    }
+						
     HashMapMember *HashMapGeneric::find(const Hashable *pKey, Factory *pFactory)
     {
 	/*
@@ -175,37 +227,8 @@ namespace bookofbrilliantthings
 	pKey->hash(&hash);
 	unsigned long hashValue = hash.get();
 	size_t iBucket = hashValue & (nBuckets - 1);
-	Bucket *pB = pBucket + iBucket;
-	HashMapMember **ppM;
-	for(ppM = &pB->pList; *ppM; ppM = &(*ppM)->pNext)
-	{
-	    if ((*ppM)->hashValue == hashValue)
-	    {
-		const void *pLeft =
-		    (const void *)(((char *)(*ppM)) - memberOffset + keyOffset);
-		int cmp = pCmp->compare(pLeft, pKey->getRawPointer());
-		if (cmp == 0)
-		    return *ppM;
-
-		if (cmp > 0)
-		    break;
-	    }
-
-	    if ((*ppM)->hashValue > hashValue)
-		break;
-	}
-
-	/* if we got here, there was no match for the key */
-	if (!pFactory)
-	    return NULL;
-
-	HashMapMember *pNew = pFactory->create();
-	pNew->hashValue = hashValue;
-	pNew->pNext = *ppM;
-	*ppM = pNew;
-	++nItems;
-
-	return pNew;
+	return findInBucket(pBucket + iBucket, hashValue,
+			    pKey->getRawPointer(), NULL, pFactory);
     }
 
     void HashMapGeneric::clear(void (*destroy)(void *))
@@ -213,7 +236,7 @@ namespace bookofbrilliantthings
 	size_t i;
 	Bucket *pB;
 
-	for(pB = pBucket, i = nBuckets; i; ++pBucket, --i)
+	for(pB = pBucket, i = nBuckets; i; ++pB, --i)
 	{
 	    HashMapMember *pM;
 	    while((pM = pB->pList))

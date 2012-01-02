@@ -74,11 +74,28 @@ static void testHashMap()
 	HashableUnsignedLong hul(i);
 	TestStructFactory tsf(i);
 	TestStruct *pts = hashMap.find(&hul, &tsf);
-
 	assert(pts);
 	assert(pts->key == i);
 	assert(pts->voo == i);
 	assert(pts->doo == i);
+
+	/* look for it again */
+	pts = hashMap.find(&hul, NULL);
+	assert(pts);
+	assert(pts->key == i);
+	assert(pts->voo == i);
+	assert(pts->doo == i);
+
+	/* look for the last one */
+	if (i > 0)
+	{
+	    HashableUnsignedLong hulPrev(i - 1);
+	    pts = hashMap.find(&hulPrev, NULL);
+	    assert(pts);
+	    assert(pts->key == i - 1);
+	    assert(pts->voo == i - 1);
+	    assert(pts->doo == i - 1);
+	}
     }
 
     assert(hashMap.getCount() == n);
@@ -88,7 +105,6 @@ static void testHashMap()
     {
 	HashableUnsignedLong hul(i);
 	TestStruct *pts = hashMap.find(&hul, NULL);
-
 	assert(pts);
 	assert(pts->key == i);
 	assert(pts->voo == i);
