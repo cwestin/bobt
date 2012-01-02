@@ -18,8 +18,8 @@ using namespace phoenix4cpp;
 typedef struct
 {
     unsigned key;
-    char *pLastName;
-    char *pFirstName;
+    const char *pLastName;
+    const char *pFirstName;
 } Student;
 
 
@@ -51,8 +51,8 @@ int compareStudent(const void *pl, const void *pr)
 typedef struct
 {
     unsigned salary;
-    char *pFirstName;
-    char *pLastName;
+    const char *pFirstName;
+    const char *pLastName;
     unsigned key;
 } Professor;
 
