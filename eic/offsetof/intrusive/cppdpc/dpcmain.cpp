@@ -78,6 +78,7 @@ static void testHashMap()
 	assert(pts->key == i);
 	assert(pts->voo == i);
 	assert(pts->doo == i);
+	assert(hashMap.getCount() == i + 1);
 
 	/* look for it again */
 	pts = hashMap.find(&hul, NULL);
@@ -117,6 +118,8 @@ static void testHashMap()
 	assert(!hashMap.remove(pts));
 	assert(hashMap.getCount() == n - (i + 1));
     }
+
+    assert(hashMap.getCount() == 0);
 }
 
 
