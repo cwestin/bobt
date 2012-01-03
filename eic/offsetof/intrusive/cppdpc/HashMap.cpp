@@ -9,20 +9,16 @@
 #include "HashMap.h"
 #endif
 
-#ifndef BOBT_CASSERT_H
 #include <cassert>
-#define BOBT_CASSERT_H
-#endif
 
 #ifndef PHOENIX4CPP_HASHVALUE_H
 #include <HashValue.h>
 #endif
 
 
-using namespace phoenix4cpp;
-
 namespace bookofbrilliantthings
 {
+    using namespace phoenix4cpp;
 
     HashMapMember::HashMapMember():
 	pNext(NULL),
@@ -45,13 +41,18 @@ namespace bookofbrilliantthings
     }
 
 
-    HashMapGeneric::HashMapGeneric(size_t initBuckets, size_t ab, size_t mo,
-				   size_t ko, const Comparator *pComparator):
+    HashMapGeneric::HashMapGeneric(
+	size_t initBuckets, size_t ab, size_t mo, size_t ko,
+	void (*hash)(HashValue *pHashValue, const void *pKey),
+	int (*cmp)(const void *pL, const void *pR),
+	void (*destroy)(void *)):
 	nItems(0),
 	avgBucket(ab),
 	memberOffset(mo),
 	keyOffset(ko),
-	pCmp(pComparator)
+	hashf(hash),
+	cmpf(cmp),
+	destroyf(destroy)
     {
 
 	/*
@@ -90,8 +91,9 @@ namespace bookofbrilliantthings
 	return nItems;
     }
 
-    bool HashMapGeneric::remove(HashMapMember *pMember)
+    bool HashMapGeneric::remove(void *pI)
     {
+	HashMapMember *pMember = (HashMapMember *)(((char *)pI) + memberOffset);
 	const size_t iBucket = pMember->hashValue & (nBuckets - 1);
 	Bucket *const pB = pBucket + iBucket;
 	for(HashMapMember **ppM = &pB->pList; *ppM; ppM = &(*ppM)->pNext)
@@ -183,7 +185,7 @@ namespace bookofbrilliantthings
 	    {
 		const void *pLeft =
 		    (const void *)(((char *)(*ppM)) - memberOffset + keyOffset);
-		int cmp = pCmp->compare(pLeft, pKey);
+		int cmp = (*cmpf)(pLeft, pKey);
 		if (cmp == 0)
 		    return *ppM;
 
@@ -213,7 +215,7 @@ namespace bookofbrilliantthings
 	return pNew;
     }
 						
-    HashMapMember *HashMapGeneric::find(const Hashable *pKey, Factory *pFactory)
+    void *HashMapGeneric::find(const void *pKey, Factory *pFactory)
     {
 	/*
 	  If we might be adding something, and we're over the specified
@@ -224,14 +226,18 @@ namespace bookofbrilliantthings
 
 	/* find where the requested item belongs */
 	HashValue hash;
-	pKey->hash(&hash);
+	(*hashf)(&hash, pKey);
 	unsigned long hashValue = hash.get();
 	size_t iBucket = hashValue & (nBuckets - 1);
-	return findInBucket(pBucket + iBucket, hashValue,
-			    pKey->getRawPointer(), NULL, pFactory);
+	HashMapMember *pM = findInBucket(
+	    pBucket + iBucket, hashValue, pKey, NULL, pFactory);
+
+	if (pM)
+	    return (void *)(((char *)pM) - memberOffset);
+	return NULL;
     }
 
-    void HashMapGeneric::clear(void (*destroy)(void *))
+    void HashMapGeneric::clear()
     {
 	size_t i;
 	Bucket *pB;
@@ -246,13 +252,15 @@ namespace bookofbrilliantthings
 		pM->pNext = NULL;
 		--nItems;
 
-		(*destroy)((void *)(((char *)pM) - memberOffset));
+		(*destroyf)((void *)(((char *)pM) - memberOffset));
 	    }
 	}
     }
 
     HashMapGeneric::~HashMapGeneric()
     {
+	clear();
+
 	/* this had better already be empty */
 	assert(!nItems);
 

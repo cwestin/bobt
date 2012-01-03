@@ -10,17 +10,10 @@
 #ifndef BOBT_HASHMAP_H
 #define BOBT_HASHMAP_H
 
-#ifndef BOBT_CSTDDEF_H
 #include <cstddef>
-#define BOBT_CSTDDEF_H
-#endif
 
-#ifndef PHOENIX4CPP_COMPARATOR_H
-#include <Comparator.h>
-#endif
-
-#ifndef PHOENIX4CPP_HASHABLE_H
-#include <Hashable.h>
+#ifndef PHOENIX4CPP_HASHVALUE_H
+#include <HashValue.h>
 #endif
 
 
@@ -55,9 +48,13 @@ namespace bookofbrilliantthings
 
 	HashMapGeneric(size_t initBuckets, size_t avgBucket,
 		       size_t memberOffset, size_t keyOffset,
-		       const Comparator *pComparator);
+		       void (*hash)(HashValue *pHashValue, const void *pKey),
+		       int (*cmp)(const void *pL, const void *pR),
+		       void (*destroy)(void *pI));
+
 	size_t getCount() const;
-	bool remove(HashMapMember *pMember);
+
+	bool remove(void *pI);
 
 	class Factory
 	{
@@ -66,9 +63,9 @@ namespace bookofbrilliantthings
 	    virtual HashMapMember *create() = 0;
 	};
 
-	HashMapMember *find(const Hashable *pKey, Factory *pFactory);
+	void *find(const void *pKey, Factory *pFactory);
 
-	void clear(void (*destroy)(void *));
+	void clear();
 
     private:
 	void upsize();
@@ -88,7 +85,9 @@ namespace bookofbrilliantthings
 	size_t avgBucket;
 	size_t memberOffset;
 	size_t keyOffset;
-	const Comparator *pCmp;
+	void (*hashf)(HashValue *, const void *);
+        int (*cmpf)(const void *, const void *);
+	void (*destroyf)(void *);
     };
 
     template <class I, size_t memberOffset, class K, size_t keyOffset>
@@ -99,42 +98,41 @@ namespace bookofbrilliantthings
 	~HashMap();
 
 	HashMap(size_t initBuckets, size_t avgBucket,
-		const Comparator *pComparator);
+		void (*hash)(HashValue *pHashValue, const K *pKey),
+		int (*cmp)(const K *pLeft, const K *pRight),
+	        void (*destroy)(I *pI));
+
 	size_t getCount() const;
+
 	bool remove(I *pI);
 
-	I *find(const Hashable *pKey, Factory *pFactory);
-
-    private:
-	/* This will be instantiated for each type */
-	static void itemDestroy(void *);
+	I *find(const K *pKey, Factory *pFactory);
     };
+
 }
 
-/* ------------------------- PRIVATE IMPLEMENTATION ------------------------- */
+
+/* ========================= PRIVATE IMPLEMENTATION ========================= */
 
 namespace bookofbrilliantthings
 {
     template <class I, size_t tMemberOffset, class K, size_t tKeyOffset>
     inline HashMap<I, tMemberOffset, K, tKeyOffset>::HashMap(
-	size_t initBuckets, size_t avgBucket, const Comparator *pComparator):
-	HashMapGeneric(initBuckets, avgBucket, tMemberOffset, tKeyOffset,
-	    pComparator)
+	size_t initBuckets, size_t avgBucket,
+	void (*hash)(HashValue *pHashValue, const K *pKey),
+	int (*cmp)(const K *pLeft, const K *pRight),
+	void (*destroy)(I *pI)):
+	HashMapGeneric(
+	    initBuckets, avgBucket, tMemberOffset, tKeyOffset,
+	    (void (*)(HashValue *, const void *))hash,
+	    (int (*)(const void *, const void *))cmp,
+	    (void (*)(void *))destroy)
     {
     }
 
     template <class I, size_t memberOffset, class K, size_t keyOffset>
     inline HashMap<I, memberOffset, K, keyOffset>::~HashMap()
     {
-	/*
-	  Clear out the generic map first.
-
-	  We have to do this from here in order to provide the callback that
-	  will call the type-specific destructor.
-	*/
-	clear(itemDestroy);
-
-	/* ~HashMapGeneric() will clean everything else up now */
     }
 
     template <class I, size_t memberOffset, class K, size_t keyOffset>
@@ -146,27 +144,14 @@ namespace bookofbrilliantthings
     template <class I, size_t tMemberOffset, class K, size_t keyOffset>
     inline bool HashMap<I, tMemberOffset, K, keyOffset>::remove(I *pI)
     {
-	HashMapMember *pM = (HashMapMember *)(((char *)pI) + tMemberOffset);
-	return HashMapGeneric::remove(pM);
+	return HashMapGeneric::remove(pI);
     }
 
     template <class I, size_t tMemberOffset, class K, size_t keyOffset>
     inline I *HashMap<I, tMemberOffset, K, keyOffset>::find(
-	const Hashable *pKey, Factory *pFactory)
+	const K *pKey, Factory *pFactory)
     {
-	HashMapMember *pM = HashMapGeneric::find(pKey, pFactory);
-	if (pM)
-	    return (I *)(((char *)pM) - tMemberOffset);
-
-	/* we didn't find it */
-	return NULL;
-    }
-
-    template <class I, size_t memberOffset, class K, size_t keyOffset>
-    void HashMap<I, memberOffset, K, keyOffset>::itemDestroy(void *pItem)
-    {
-	I *pI = static_cast<I *>(pItem);
-	delete pI;
+	return (I *)HashMapGeneric::find(pKey, pFactory);
     }
 
 }

@@ -5,14 +5,17 @@
   https://www.bookofbrilliantthings.com/eic/offsetof/intrusive-data-structures
  */
 
-#ifndef BOBT_CASSERT_H
-#include <cassert>
-#define BOBT_CASSERT_H
+#ifndef PHOENIX4CPP_HASH_H
+#include "hash.h"
 #endif
 
-#ifndef BOBT_HASHMAP_H
-#include "HashMap.h"
+#include <cassert>
+
+#ifndef PHOENIX4CPP_COMPARE_H
+#include <compare.h>
 #endif
+
+#include "HashMap.h"
 
 using namespace phoenix4cpp;
 using namespace bookofbrilliantthings;
@@ -28,7 +31,15 @@ public:
 
     unsigned long key;
     HashMapMember hmMember;
+
+    static void destroy(TestStruct *p);
 };
+
+void TestStruct::destroy(TestStruct *p)
+{
+    delete p;
+}
+
 
 class TestStructFactory :
     public HashMapGeneric::Factory
@@ -59,21 +70,21 @@ HashMapMember *TestStructFactory::create()
     return &pts->hmMember;
 }
 
+
 static void testHashMap()
 {
-    ComparatorUnsignedLong cmpul;
     HashMap<TestStruct, offsetof(TestStruct, hmMember),
-	unsigned long, offsetof(TestStruct, key)> hashMap(0, 0, &cmpul);
+	unsigned long, offsetof(TestStruct, key)> hashMap(
+	    0, 0, hashUnsignedLong, compareUnsignedLong, TestStruct::destroy);
     assert(hashMap.getCount() == 0);
 
     const unsigned n = 100;
 
     /* insert a bunch of items into the map */
-    for(unsigned i = 0; i < n; ++i)
+    for(unsigned long i = 0; i < n; ++i)
     {
-	HashableUnsignedLong hul(i);
 	TestStructFactory tsf(i);
-	TestStruct *pts = hashMap.find(&hul, &tsf);
+	TestStruct *pts = hashMap.find(&i, &tsf);
 	assert(pts);
 	assert(pts->key == i);
 	assert(pts->voo == i);
@@ -81,7 +92,7 @@ static void testHashMap()
 	assert(hashMap.getCount() == i + 1);
 
 	/* look for it again */
-	pts = hashMap.find(&hul, NULL);
+	pts = hashMap.find(&i, NULL);
 	assert(pts);
 	assert(pts->key == i);
 	assert(pts->voo == i);
@@ -90,8 +101,8 @@ static void testHashMap()
 	/* look for the last one */
 	if (i > 0)
 	{
-	    HashableUnsignedLong hulPrev(i - 1);
-	    pts = hashMap.find(&hulPrev, NULL);
+	    unsigned long prev = i - 1;
+	    pts = hashMap.find(&prev, NULL);
 	    assert(pts);
 	    assert(pts->key == i - 1);
 	    assert(pts->voo == i - 1);
@@ -102,10 +113,9 @@ static void testHashMap()
     assert(hashMap.getCount() == n);
 
     /* check that the items are in the map, and remove them */
-    for(unsigned i = 0; i < n; ++i)
+    for(unsigned long i = 0; i < n; ++i)
     {
-	HashableUnsignedLong hul(i);
-	TestStruct *pts = hashMap.find(&hul, NULL);
+	TestStruct *pts = hashMap.find(&i, NULL);
 	assert(pts);
 	assert(pts->key == i);
 	assert(pts->voo == i);

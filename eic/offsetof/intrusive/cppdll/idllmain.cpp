@@ -7,7 +7,10 @@
 
 #include <cstddef>
 #include <stdio.h>
+
+#ifndef PHOENIX4CPP_DOUBLYLINKED_H
 #include <DoublyLinked.h>
+#endif
 
 
 using namespace phoenix4cpp;

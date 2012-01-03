@@ -12,7 +12,14 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include "bsearch.h"
+
+#ifndef PHOENIX4CPP_BSEARCH_H
+#include <bsearch.h>
+#endif
+
+#ifndef PHOENIX4CPP_COMPARE_H
+#include <compare.h>
+#endif
 
 using namespace phoenix4cpp;
 
@@ -249,10 +256,11 @@ bool ArgvParser::parse(void *pS, Error *pError,
 	    }
 
 	    /* find it in the descriptor array */
-	    const char *const pKey = &pArg[2];
+	    const char *pKey = &pArg[2];
 	    const Descriptor *pArgDesc =
-		bsearch<Descriptor, charstar, offsetof(Descriptor, pLongName)>(
-		    &pKey, pDesc, nD);
+		bsearch<Descriptor, const char *,
+			offsetof(Descriptor, pLongName)>(
+		    &pKey, pDesc, nD, compareCharStar);
 	    if (!pArgDesc)
 	    {
 		char buf[128];

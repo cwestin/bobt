@@ -17,5 +17,7 @@ clean:
 HashMap.o:	HashMap.cpp HashMap.h
 	$(CC) $(CFLAGS) -c $<
 
-dpcmain:	dpcmain.cpp HashMap.o $(INCLUDE)/DoublyLinked.h $(LIBRARY)
+dpcmain:	dpcmain.cpp HashMap.o \
+	$(INCLUDE)/DoublyLinked.h \
+	$(INCLUDE)/hash.h $(LIBRARY)
 	$(CC) $(CFLAGS) -o $@ $< HashMap.o -Wl,-l:$(LIBRARY)
