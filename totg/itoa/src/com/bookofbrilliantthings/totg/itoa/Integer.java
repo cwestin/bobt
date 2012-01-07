@@ -16,6 +16,10 @@ public class Integer
 			return;
 		}
 		
+		/*
+		 * This local buffer is never passed anywhere, so we should expect escape
+		 * analysis to detect it can be reclaimed on function exit.
+		 */
 		final char buf[] = new char[32];
 		int idx	 = 32;
 		boolean negative = false;
@@ -32,6 +36,7 @@ public class Integer
 		if (negative)
 			buf[--idx] = '-';
 		
+		/* write the characters out one at a time to avoid passing the char array */
 		for(idx = 32 - idx; idx != 0; --idx)
 			writer.write(buf[idx]);
 	}
