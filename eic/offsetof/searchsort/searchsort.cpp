@@ -8,8 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "bsearch.h"
-#include "compare.h"
+#include <bsearch.h>
+#include <compare.h>
 
 using namespace phoenix4cpp;
 
@@ -18,8 +18,8 @@ using namespace phoenix4cpp;
 typedef struct
 {
     unsigned key;
-    char *pLastName;
-    char *pFirstName;
+    const char *pLastName;
+    const char *pFirstName;
 } Student;
 
 
@@ -51,8 +51,8 @@ int compareStudent(const void *pl, const void *pr)
 typedef struct
 {
     unsigned salary;
-    char *pFirstName;
-    char *pLastName;
+    const char *pFirstName;
+    const char *pLastName;
     unsigned key;
 } Professor;
 
@@ -118,7 +118,7 @@ int main()
     pStudent = (const Student *)
 	bsearch<Student, unsigned, offsetof(Student, key)>(
 	    &keyStudent, enrolled, sizeof(enrolled)/sizeof(Student),
-	    compare<unsigned>);
+	    compareUnsigned);
 
     if (pStudent)
     {
@@ -130,7 +130,8 @@ int main()
     unsigned keyProfessor = 11;
     pProfessor = (const Professor *)
 	bsearch<Professor, unsigned, offsetof(Professor, key)>(
-	    &keyProfessor, faculty, sizeof(faculty)/sizeof(Professor));
+	    &keyProfessor, faculty, sizeof(faculty)/sizeof(Professor),
+	    compareUnsigned);
 
     if (pProfessor)
     {
