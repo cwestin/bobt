@@ -74,8 +74,8 @@ HashMapMember *TestStructFactory::create()
 static void testHashMap()
 {
     HashMap<TestStruct, offsetof(TestStruct, hmMember),
-	unsigned long, offsetof(TestStruct, key)> hashMap(
-	    0, 0, hashUnsignedLong, compareUnsignedLong, TestStruct::destroy);
+        unsigned long, offsetof(TestStruct, key)> hashMap(
+            0, 0, hashUnsignedLong, compareUnsignedLong, TestStruct::destroy);
     assert(hashMap.getCount() == 0);
 
     const unsigned n = 100;
@@ -83,31 +83,31 @@ static void testHashMap()
     /* insert a bunch of items into the map */
     for(unsigned long i = 0; i < n; ++i)
     {
-	TestStructFactory tsf(i);
-	TestStruct *pts = hashMap.find(&i, &tsf);
-	assert(pts);
-	assert(pts->key == i);
-	assert(pts->voo == i);
-	assert(pts->doo == i);
-	assert(hashMap.getCount() == i + 1);
+        TestStructFactory tsf(i);
+        TestStruct *pts = hashMap.find(&i, &tsf);
+        assert(pts);
+        assert(pts->key == i);
+        assert(pts->voo == i);
+        assert(pts->doo == i);
+        assert(hashMap.getCount() == i + 1);
 
-	/* look for it again */
-	pts = hashMap.find(&i, NULL);
-	assert(pts);
-	assert(pts->key == i);
-	assert(pts->voo == i);
-	assert(pts->doo == i);
+        /* look for it again */
+        pts = hashMap.find(&i, NULL);
+        assert(pts);
+        assert(pts->key == i);
+        assert(pts->voo == i);
+        assert(pts->doo == i);
 
-	/* look for the last one */
-	if (i > 0)
-	{
-	    unsigned long prev = i - 1;
-	    pts = hashMap.find(&prev, NULL);
-	    assert(pts);
-	    assert(pts->key == i - 1);
-	    assert(pts->voo == i - 1);
-	    assert(pts->doo == i - 1);
-	}
+        /* look for the last one */
+        if (i > 0)
+        {
+            unsigned long prev = i - 1;
+            pts = hashMap.find(&prev, NULL);
+            assert(pts);
+            assert(pts->key == i - 1);
+            assert(pts->voo == i - 1);
+            assert(pts->doo == i - 1);
+        }
     }
 
     assert(hashMap.getCount() == n);
@@ -115,18 +115,18 @@ static void testHashMap()
     /* check that the items are in the map, and remove them */
     for(unsigned long i = 0; i < n; ++i)
     {
-	TestStruct *pts = hashMap.find(&i, NULL);
-	assert(pts);
-	assert(pts->key == i);
-	assert(pts->voo == i);
-	assert(pts->doo == i);
+        TestStruct *pts = hashMap.find(&i, NULL);
+        assert(pts);
+        assert(pts->key == i);
+        assert(pts->voo == i);
+        assert(pts->doo == i);
 
-	bool r = hashMap.remove(pts);
-	assert(r);
+        bool r = hashMap.remove(pts);
+        assert(r);
 
-	/* make sure its gone */
-	assert(!hashMap.remove(pts));
-	assert(hashMap.getCount() == n - (i + 1));
+        /* make sure its gone */
+        assert(!hashMap.remove(pts));
+        assert(hashMap.getCount() == n - (i + 1));
     }
 
     assert(hashMap.getCount() == 0);

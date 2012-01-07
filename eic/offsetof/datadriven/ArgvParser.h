@@ -37,9 +37,9 @@ public:
      */
     enum ArgType
     {
-	typeBool = 1, /* single value "flags," such as "-c", or "--myoption" */
-	typeString = 2, /* for flags that precede a string argument */
-	typeInt = 3, /* for options that precede an integer argument */
+        typeBool = 1, /* single value "flags," such as "-c", or "--myoption" */
+        typeString = 2, /* for flags that precede a string argument */
+        typeInt = 3, /* for options that precede an integer argument */
     };
 
     static const unsigned optionMulti = 0x00000001;
@@ -66,12 +66,12 @@ public:
      */
     struct Descriptor
     {
-	char shortName[2];
-	const char *pLongName;
-	ArgType argType;
-	unsigned options; /* logical OR of option* values from above */
-	size_t offset;
-	int intDefault;
+        char shortName[2];
+        const char *pLongName;
+        ArgType argType;
+        unsigned options; /* logical OR of option* values from above */
+        size_t offset;
+        int intDefault;
     };
 
     /*
@@ -79,8 +79,8 @@ public:
      */
     struct StringArg
     {
-	struct StringArg *pNext;
-	const char *pArg;
+        struct StringArg *pNext;
+        const char *pArg;
     };
 
     /*
@@ -92,8 +92,8 @@ public:
     class Error
     {
     public:
-	virtual ~Error() {};
-	virtual void report(const Descriptor *pD, const char *pMsg) = 0;
+        virtual ~Error() {};
+        virtual void report(const Descriptor *pD, const char *pMsg) = 0;
     };
 
     /*
@@ -111,7 +111,7 @@ public:
 
       @param pSink pointer to a structure in which to place the found arguments;
         any particular argument will be put at the offset specified in its
-	argument descriptor
+        argument descriptor
       @param pError pointer to a class to use to report parsing errors
       @param pDescriptor base of an array of argument descriptors
       @param nDesc count of entries in the pDescriptor array
@@ -120,8 +120,8 @@ public:
       @returns true if there are no parse errors, false otherwise
      */
     static bool parse(void *pSink, Error *pError,
-		      const Descriptor *pDescriptor, size_t nDesc,
-		      int argc, const char *const argv[]);
+                      const Descriptor *pDescriptor, size_t nDesc,
+                      int argc, const char *const argv[]);
 
     /*
       clean up any memory allocated by parse()
@@ -134,7 +134,7 @@ public:
 
       @param pSink pointer to a structure in which to place the found arguments;
         any particular argument will be at the offset specified in its
-	argument descriptor
+        argument descriptor
       @param pDescriptor base of an array of argument descriptors
       @param nDesc count of entries in the pDescriptor array
      */

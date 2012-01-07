@@ -28,35 +28,35 @@ int main()
     unsigned i;
     for(i = 0; i < 20; ++i)
     {
-	/* allocate the item */
-	myitem *pitem = (myitem *)malloc(sizeof(myitem));
+        /* allocate the item */
+        myitem *pitem = (myitem *)malloc(sizeof(myitem));
 
-	/* initialize the membership */
-	pxlibDllMemberInit(&pitem->link);
+        /* initialize the membership */
+        pxlibDllMemberInit(&pitem->link);
 
-	/* set the value */
-	pitem->x = i;
+        /* set the value */
+        pitem->x = i;
 
-	/* append it to the list */
-	pxlibDllAppend(&list, &pitem->link);
+        /* append it to the list */
+        pxlibDllAppend(&list, &pitem->link);
     }
 
     /* print out the list members */
     pxlibDllMember *pMember;
     for(pMember = pxlibDllFirst(&list); pMember;
-	pMember = pxlibDllNext(&list, pMember))
+        pMember = pxlibDllNext(&list, pMember))
     {
-	myitem *pitem = pxlibDllGetMember(pMember, myitem, link);
-	printf("%u ", pitem->x);
+        myitem *pitem = pxlibDllGetMember(pMember, myitem, link);
+        printf("%u ", pitem->x);
     }
     printf("\n");
 
     /* free all list elements to clean up */
     while((pMember = pxlibDllFirst(&list)))
     {
-	myitem *pitem = pxlibDllGetMember(pMember, myitem, link);
-	pxlibDllRemove(pMember);
-	free(pitem);
+        myitem *pitem = pxlibDllGetMember(pMember, myitem, link);
+        pxlibDllRemove(pMember);
+        free(pitem);
     }
 
     return 0;

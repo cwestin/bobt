@@ -38,21 +38,21 @@ int main()
     unsigned i;
     for(i = 0; i < 20; ++i)
     {
-	/* allocate the item */
-	MyItem *pItem = new MyItem;
+        /* allocate the item */
+        MyItem *pItem = new MyItem;
 
-	/* set the value */
-	pItem->x = i;
+        /* set the value */
+        pItem->x = i;
 
-	/* append it to the list */
-	list.append(pItem);
+        /* append it to the list */
+        list.append(pItem);
     }
 
     /* print out the list members */
     MyItem *pItem;
     for(pItem = list.getFirst(); pItem; pItem = list.getNext(pItem))
     {
-	printf("%u ", pItem->x);
+        printf("%u ", pItem->x);
     }
     printf("\n");
 
@@ -60,9 +60,9 @@ int main()
 #ifdef NEVER // the list head destructor will take care of this here
     while((pItem = list.getFirst()))
     {
-	// pItem->link.remove();
-	list.remove(pItem);
-	delete pItem;
+        // pItem->link.remove();
+        list.remove(pItem);
+        delete pItem;
     }
 #endif
 

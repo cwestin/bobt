@@ -41,7 +41,7 @@ class MyError :
 public:
     // virtuals from ArgvParser::Error
     virtual void report(const ArgvParser::Descriptor *pDesc,
-			const char *pMsg);
+                        const char *pMsg);
 
     MyError(const char *a0);
 
@@ -50,7 +50,7 @@ private:
 };
 
 void MyError::report(const ArgvParser::Descriptor *pDesc,
-		     const char *pMsg)
+                     const char *pMsg)
 {
     printf("%s: %s\n", argv0, pMsg);
 }
@@ -67,29 +67,29 @@ int main(int argc, char *argv[])
     MyError myError(argv[0]);
 
     if (!ArgvParser::parse(&myArgs, &myError, argDesc, argCount, argc, argv))
-	return -1;
+        return -1;
 
     /* show us what we got */
     if (myArgs.c)
-	printf(" -c\n");
+        printf(" -c\n");
 
     printf(" -i %i\n", myArgs.i);
 
     if (myArgs.pStringList)
     {
-	const ArgvParser::StringArg *pSA = myArgs.pStringList;
-	for(; pSA; pSA = pSA->pNext)
-	    printf(" -l %s\n", pSA->pArg);
+        const ArgvParser::StringArg *pSA = myArgs.pStringList;
+        for(; pSA; pSA = pSA->pNext)
+            printf(" -l %s\n", pSA->pArg);
     }
 
     if (myArgs.pS)
-	printf(" -s %s\n", myArgs.pS);
+        printf(" -s %s\n", myArgs.pS);
 
     if (myArgs.pNakedArgs)
     {
-	const ArgvParser::StringArg *pSA = myArgs.pNakedArgs;
-	for(; pSA; pSA = pSA->pNext)
-	    printf(" %s\n", pSA->pArg);
+        const ArgvParser::StringArg *pSA = myArgs.pNakedArgs;
+        for(; pSA; pSA = pSA->pNext)
+            printf(" %s\n", pSA->pArg);
     }
 
     /* clean up any allocated memory */

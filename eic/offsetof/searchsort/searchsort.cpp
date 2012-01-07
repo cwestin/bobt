@@ -38,10 +38,10 @@ int compareStudent(const void *pl, const void *pr)
     const Student *prs = (const Student *)pr;
 
     if (pls->key < prs->key)
-	return -1;
+        return -1;
 
     if (pls->key > prs->key)
-	return 1;
+        return 1;
 
     return 0;
 }
@@ -70,10 +70,10 @@ int compareProfessor(const void *pl, const void *pr)
     const Professor *prp = (const Professor *)pr;
 
     if (plp->key < prp->key)
-	return -1;
+        return -1;
 
     if (plp->key > prp->key)
-	return 1;
+        return 1;
 
     return 0;
 }
@@ -89,25 +89,25 @@ int main()
     Student studentKey; /* a Student structure we'll need to use as a key */
     studentKey.key = 2;
     pStudent = (const Student *)bsearch(
-	&studentKey, enrolled, sizeof(enrolled)/sizeof(Student),
-	sizeof(Student), compareStudent);
+        &studentKey, enrolled, sizeof(enrolled)/sizeof(Student),
+        sizeof(Student), compareStudent);
 
     if (pStudent)
     {
-	printf("ID: %d, last name: %s, first name: %s\n",
-	       pStudent->key, pStudent->pLastName, pStudent->pFirstName);
+        printf("ID: %d, last name: %s, first name: %s\n",
+               pStudent->key, pStudent->pLastName, pStudent->pFirstName);
     }
 
     Professor professorKey;
                           /* a Professor structure we'll need to use as a key */
     professorKey.key = 7;
     pProfessor = (const Professor *)bsearch(
-	&professorKey, faculty, sizeof(faculty)/sizeof(Professor),
-	sizeof(Professor), compareProfessor);
+        &professorKey, faculty, sizeof(faculty)/sizeof(Professor),
+        sizeof(Professor), compareProfessor);
     if (pProfessor)
     {
-	printf("ID: %d, last name %s, first name: %s\n",
-	       pProfessor->key, pProfessor->pLastName, pProfessor->pFirstName);
+        printf("ID: %d, last name %s, first name: %s\n",
+               pProfessor->key, pProfessor->pLastName, pProfessor->pFirstName);
     }
   
     /*
@@ -116,27 +116,27 @@ int main()
     /* find the student with ID key */
     unsigned keyStudent = 9;
     pStudent = (const Student *)
-	bsearch<Student, unsigned, offsetof(Student, key)>(
-	    &keyStudent, enrolled, sizeof(enrolled)/sizeof(Student),
-	    compareUnsigned);
+        bsearch<Student, unsigned, offsetof(Student, key)>(
+            &keyStudent, enrolled, sizeof(enrolled)/sizeof(Student),
+            compareUnsigned);
 
     if (pStudent)
     {
-	printf("ID: %d, last name: %s, first name: %s\n",
-	       pStudent->key, pStudent->pLastName, pStudent->pFirstName);
+        printf("ID: %d, last name: %s, first name: %s\n",
+               pStudent->key, pStudent->pLastName, pStudent->pFirstName);
     }
 
     /* find the professor with ID key */
     unsigned keyProfessor = 11;
     pProfessor = (const Professor *)
-	bsearch<Professor, unsigned, offsetof(Professor, key)>(
-	    &keyProfessor, faculty, sizeof(faculty)/sizeof(Professor),
-	    compareUnsigned);
+        bsearch<Professor, unsigned, offsetof(Professor, key)>(
+            &keyProfessor, faculty, sizeof(faculty)/sizeof(Professor),
+            compareUnsigned);
 
     if (pProfessor)
     {
-	printf("ID: %d, last name %s, first name: %s\n",
-	       pProfessor->key, pProfessor->pLastName, pProfessor->pFirstName);
+        printf("ID: %d, last name %s, first name: %s\n",
+               pProfessor->key, pProfessor->pLastName, pProfessor->pFirstName);
     }
 
     return 0;
