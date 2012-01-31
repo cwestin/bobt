@@ -1,0 +1,225 @@
+	.file	"forloop.c"
+	.text
+	.p2align 4,,15
+.globl _ResultInit
+	.def	_ResultInit;	.scl	2;	.type	32;	.endef
+_ResultInit:
+	pushl	%ebp
+	movl	%esp, %ebp
+	movl	8(%ebp), %eax
+	movl	$0, (%eax)
+	movl	$2147483647, 4(%eax)
+	movl	$-2147483648, 8(%eax)
+	popl	%ebp
+	ret
+	.p2align 4,,15
+.globl _for_classic
+	.def	_for_classic;	.scl	2;	.type	32;	.endef
+_for_classic:
+	pushl	%ebp
+	movl	%esp, %ebp
+	movl	8(%ebp), %ecx
+	pushl	%edi
+	movl	16(%ebp), %edi
+	pushl	%esi
+	movl	12(%ebp), %esi
+	pushl	%ebx
+	xorl	%ebx, %ebx
+	cmpl	%edi, %ebx
+	movl	$0, (%ecx)
+	movl	$2147483647, 4(%ecx)
+	movl	$-2147483648, 8(%ecx)
+	jae	L11
+	.p2align 4,,15
+L16:
+	movl	%ebx, %edx
+	sall	$5, %edx
+	movl	28(%edx,%esi), %eax
+	addl	%eax, (%ecx)
+	movl	28(%edx,%esi), %eax
+	cmpl	4(%ecx), %eax
+	jge	L7
+	movl	%eax, 4(%ecx)
+	movl	28(%edx,%esi), %eax
+L7:
+	cmpl	8(%ecx), %eax
+	jle	L6
+	movl	%eax, 8(%ecx)
+L6:
+	incl	%ebx
+	cmpl	%edi, %ebx
+	jb	L16
+L11:
+	popl	%ebx
+	popl	%esi
+	popl	%edi
+	popl	%ebp
+	ret
+	.p2align 4,,15
+.globl _for_optimized
+	.def	_for_optimized;	.scl	2;	.type	32;	.endef
+_for_optimized:
+	pushl	%ebp
+	movl	%esp, %ebp
+	movl	16(%ebp), %ecx
+	pushl	%ebx
+	movl	8(%ebp), %ebx
+	movl	12(%ebp), %edx
+	testl	%ecx, %ecx
+	movl	$0, (%ebx)
+	movl	$2147483647, 4(%ebx)
+	movl	$-2147483648, 8(%ebx)
+	je	L26
+	.p2align 4,,15
+L30:
+	movl	28(%edx), %eax
+	addl	%eax, (%ebx)
+	movl	28(%edx), %eax
+	cmpl	4(%ebx), %eax
+	jge	L22
+	movl	%eax, 4(%ebx)
+	movl	28(%edx), %eax
+L22:
+	cmpl	8(%ebx), %eax
+	jle	L21
+	movl	%eax, 8(%ebx)
+L21:
+	addl	$32, %edx
+	decl	%ecx
+	jne	L30
+L26:
+	popl	%ebx
+	popl	%ebp
+	ret
+	.def	___main;	.scl	2;	.type	32;	.endef
+	.section .rdata,"dr"
+	.align 4
+LC0:
+	.ascii "for %u trials, classicTime == %lu, optimizedTime == %lu\12\0"
+	.text
+	.p2align 4,,15
+.globl _main
+	.def	_main;	.scl	2;	.type	32;	.endef
+_main:
+	pushl	%ebp
+	movl	$16, %eax
+	movl	%esp, %ebp
+	pushl	%edi
+	pushl	%esi
+	pushl	%ebx
+	subl	$1676, %esp
+	andl	$-16, %esp
+	call	__alloca
+	call	___main
+	xorl	%eax, %eax
+	leal	-1596(%ebp), %edx
+L35:
+	movl	%eax, (%edx)
+	decl	%eax
+	subl	$32, %edx
+	cmpl	$49, %eax
+	jbe	L35
+	movl	$0, (%esp)
+	movl	$10000000, %edi
+	call	_time
+	movl	%eax, -1644(%ebp)
+	movl	%edi, -1652(%ebp)
+L47:
+	xorl	%esi, %esi
+	movl	$2147483647, %ebx
+	movl	$-2147483648, %ecx
+	movl	%esi, -1640(%ebp)
+	xorl	%edi, %edi
+	xorl	%eax, %eax
+	movl	%ebx, -1636(%ebp)
+	movl	$2147483647, %esi
+	movl	$-2147483648, %ebx
+	movl	%ecx, -1632(%ebp)
+	.p2align 4,,15
+L45:
+	movl	%edi, %ecx
+	sall	$5, %ecx
+	movl	-1596(%ecx,%ebp), %edx
+	addl	%edx, %eax
+	movl	%eax, -1640(%ebp)
+	movl	-1596(%ecx,%ebp), %edx
+	cmpl	%esi, %edx
+	jge	L43
+	movl	%edx, -1636(%ebp)
+	movl	%edx, %esi
+	movl	-1596(%ecx,%ebp), %edx
+L43:
+	cmpl	%ebx, %edx
+	jle	L42
+	movl	%edx, -1632(%ebp)
+	movl	%edx, %ebx
+L42:
+	incl	%edi
+	cmpl	$50, %edi
+	jb	L45
+	decl	-1652(%ebp)
+	jne	L47
+	movl	$0, (%esp)
+	call	_time
+	movl	%eax, -1648(%ebp)
+	movl	-1644(%ebp), %edi
+	subl	%edi, -1648(%ebp)
+	movl	$0, (%esp)
+	call	_time
+	movl	%eax, -1660(%ebp)
+	movl	$10000000, %eax
+	movl	%eax, -1656(%ebp)
+L59:
+	movl	$2147483647, %ebx
+	movl	$-2147483648, %ecx
+	xorl	%edx, %edx
+	movl	%ebx, -1636(%ebp)
+	leal	-1624(%ebp), %esi
+	movl	$50, %edi
+	movl	%ecx, -1632(%ebp)
+	xorl	%eax, %eax
+	movl	$2147483647, %ebx
+	movl	%edx, -1640(%ebp)
+	movl	$-2147483648, %ecx
+	.p2align 4,,15
+L57:
+	movl	28(%esi), %edx
+	addl	%edx, %eax
+	movl	%eax, -1640(%ebp)
+	movl	28(%esi), %edx
+	cmpl	%ebx, %edx
+	jge	L55
+	movl	%edx, -1636(%ebp)
+	movl	%edx, %ebx
+	movl	28(%esi), %edx
+L55:
+	cmpl	%ecx, %edx
+	jle	L54
+	movl	%edx, -1632(%ebp)
+	movl	%edx, %ecx
+L54:
+	addl	$32, %esi
+	decl	%edi
+	jne	L57
+	decl	-1656(%ebp)
+	jne	L59
+	movl	$0, (%esp)
+	call	_time
+	movl	$LC0, (%esp)
+	movl	-1660(%ebp), %edi
+	movl	$10000000, %esi
+	movl	%esi, 4(%esp)
+	subl	%edi, %eax
+	movl	%eax, 12(%esp)
+	movl	-1648(%ebp), %eax
+	movl	%eax, 8(%esp)
+	call	_printf
+	leal	-12(%ebp), %esp
+	xorl	%eax, %eax
+	popl	%ebx
+	popl	%esi
+	popl	%edi
+	popl	%ebp
+	ret
+	.def	_printf;	.scl	3;	.type	32;	.endef
+	.def	_time;	.scl	3;	.type	32;	.endef
