@@ -16,80 +16,86 @@ _ResultInit:
 .globl _for_classic
 	.def	_for_classic;	.scl	2;	.type	32;	.endef
 _for_classic:
-	pushl	%ebp
+	pushl	%ebp		/* save the current stack pointer */
 	movl	%esp, %ebp
-	movl	8(%ebp), %ecx
-	pushl	%edi
-	movl	16(%ebp), %edi
-	pushl	%esi
-	movl	12(%ebp), %esi
-	pushl	%ebx
-	xorl	%ebx, %ebx
-	cmpl	%edi, %ebx
-	movl	$0, (%ecx)
-	movl	$2147483647, 4(%ecx)
-	movl	$-2147483648, 8(%ecx)
-	jae	L11
+	movl	8(%ebp), %ecx	/* load pr into %ecx */
+	pushl	%edi		/* save whatever's in %edi; n goes here */
+	movl	16(%ebp), %edi	/* load n into %edi */
+	pushl	%esi		/* save whatever's in %esi; ps goes here */
+	movl	12(%ebp), %esi  /* load ps into %esi */
+	pushl	%ebx		/* save whatever's in %ebx */
+	xorl	%ebx, %ebx	/* i = 0; */
+	cmpl	%edi, %ebx      /* compare n to i */
+
+		/* ResultInit got inlined here! */
+	movl	$0, (%ecx)    	  	  /* pr->sum = 0; */
+	movl	$2147483647, 4(%ecx)	  /* pr->min = INT_MAX; */
+	movl	$-2147483648, 8(%ecx)	  /* pr->max = INT_MIN; */
+
+	jae	L11		/* jump above equal: if (i >= n) goto L11; */
 	.p2align 4,,15
 L16:
-	movl	%ebx, %edx
-	sall	$5, %edx
-	movl	28(%edx,%esi), %eax
-	addl	%eax, (%ecx)
-	movl	28(%edx,%esi), %eax
-	cmpl	4(%ecx), %eax
-	jge	L7
-	movl	%eax, 4(%ecx)
-	movl	28(%edx,%esi), %eax
+	movl	%ebx, %edx	/* take the index i... */
+	sall	$5, %edx	/* shift arithmetic left:  scale it by 32 -- pointer arithmetic */
+	movl	28(%edx,%esi), %eax	/* copy ps[i].myInt into %eax */
+	addl	%eax, (%ecx)		/* add that to pr->sum */
+	movl	28(%edx,%esi), %eax	/* copy ps[i].myInt into %eax */
+	cmpl	4(%ecx), %eax		/* compare that to pr->min */
+	jge	L7			/* if (ps[i].myInt >= pr->min) goto L7; */
+	movl	%eax, 4(%ecx)		/* pr->min = ps[i].myInt; */
+	movl	28(%edx,%esi), %eax	/* copy ps[i].myInt into %eax */
 L7:
-	cmpl	8(%ecx), %eax
-	jle	L6
-	movl	%eax, 8(%ecx)
+	cmpl	8(%ecx), %eax		/* compare that to pr->max */
+	jle	L6			/* if (ps[i].myInt <= pr->max) goto L6; */
+	movl	%eax, 8(%ecx)		/* pr->max = ps[i].myInt; */
 L6:
-	incl	%ebx
-	cmpl	%edi, %ebx
-	jb	L16
+	incl	%ebx		/* i++; */
+	cmpl	%edi, %ebx	/* compare n with i */
+	jb	L16   		/* jump below:  if (i < n) goto L16; */
 L11:
-	popl	%ebx
-	popl	%esi
-	popl	%edi
-	popl	%ebp
+	popl	%ebx		/* restore %ebx (was i) */
+	popl	%esi		/* restore %psi (was ps) */
+	popl	%edi		/* restore %edi (was n) */
+	popl	%ebp		/* restore the stack pointer */
 	ret
 	.p2align 4,,15
 .globl _for_optimized
 	.def	_for_optimized;	.scl	2;	.type	32;	.endef
 _for_optimized:
-	pushl	%ebp
+	pushl	%ebp			/* save the stack pointer */
 	movl	%esp, %ebp
-	movl	16(%ebp), %ecx
-	pushl	%ebx
-	movl	8(%ebp), %ebx
-	movl	12(%ebp), %edx
-	testl	%ecx, %ecx
-	movl	$0, (%ebx)
-	movl	$2147483647, 4(%ebx)
-	movl	$-2147483648, 8(%ebx)
-	je	L26
+	movl	16(%ebp), %ecx		/* i = n; */
+	pushl	%ebx			/* save %ebx; pr goes here */
+	movl	8(%ebp), %ebx		/* load pr into %ebx */
+	movl	12(%ebp), %edx		/* load ps into %edx */
+	testl	%ecx, %ecx		/* test i */
+
+	    /* ResultInit was inlined! */
+	movl	$0, (%ebx)		/* pr->sum = 0; */
+	movl	$2147483647, 4(%ebx)	/* pr->min = INT_MAX; */
+	movl	$-2147483648, 8(%ebx)	/* pr->max = INT_MIN; */
+	
+	je	L26			/* if (i == 0) goto L26; */
 	.p2align 4,,15
 L30:
-	movl	28(%edx), %eax
-	addl	%eax, (%ebx)
-	movl	28(%edx), %eax
-	cmpl	4(%ebx), %eax
-	jge	L22
-	movl	%eax, 4(%ebx)
-	movl	28(%edx), %eax
+	movl	28(%edx), %eax		/* copy ps->myInt into %eax */
+	addl	%eax, (%ebx)		/* pr->sum += ps->myInt; */
+	movl	28(%edx), %eax		/* copy ps->myInt into %eax */
+	cmpl	4(%ebx), %eax		/* compare pr->min with that */
+	jge	L22			/* if (ps->myInt >= pr->min) goto L22; */
+	movl	%eax, 4(%ebx)		/* pr->min = ps->myInt; */
+	movl	28(%edx), %eax		/* copy ps->myInt into %eax */
 L22:
-	cmpl	8(%ebx), %eax
-	jle	L21
-	movl	%eax, 8(%ebx)
+	cmpl	8(%ebx), %eax		/* compare pr->max with that */
+	jle	L21			/* if (ps->myInt <= pr->max) goto L21; */
+	movl	%eax, 8(%ebx)		/* pr->max = ps->myInt; */
 L21:
-	addl	$32, %edx
-	decl	%ecx
-	jne	L30
+	addl	$32, %edx		/* ++ps; scaled pointer arithmetic */
+	decl	%ecx			/* --i; */
+	jne	L30			/* jump not equal; if (i) goto L30; */
 L26:
-	popl	%ebx
-	popl	%ebp
+	popl	%ebx			/* restore %ebx */
+	popl	%ebp			/* restore the stack pointer */
 	ret
 	.def	___main;	.scl	2;	.type	32;	.endef
 	.section .rdata,"dr"

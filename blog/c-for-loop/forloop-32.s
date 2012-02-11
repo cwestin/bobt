@@ -23,11 +23,12 @@ _for_classic:
 	movl	8(%ebp), %eax
 	movl	%eax, (%esp)
 	call	_ResultInit
-	movl	$0, -8(%ebp)
+	movl	$0, -8(%ebp)	/* i = 0; */
+	
 L3:
-	movl	-8(%ebp), %eax
-	cmpl	16(%ebp), %eax
-	jae	L2
+	movl	-8(%ebp), %eax	/* copy i to %eax */
+	cmpl	16(%ebp), %eax	/* compare n (in 16(%ebp)) to i (in %eax) */
+	jae	L2		/* if (i >= n) goto L2; */
 	movl	8(%ebp), %ecx
 	movl	8(%ebp), %ebx
 	movl	-8(%ebp), %eax

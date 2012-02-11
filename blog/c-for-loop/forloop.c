@@ -56,12 +56,29 @@ void for_optimized(Result *pr, SomeStruct *ps, size_t n)
     }
 }
 
+void for_optimized2(Result *pr, SomeStruct *ps, size_t n)
+{
+    size_t i;
+
+    ResultInit(pr);
+
+    for(i = n; i; --i, ++ps)
+    {
+	pr->sum += ps->myInt;
+	if (ps->myInt < pr->min)
+	    pr->min = ps->myInt;
+	if (ps->myInt > pr->max)
+	    pr->max = ps->myInt;
+    }
+}
+
 
 int main()
 {
     time_t startTime;
     time_t classicTime;
     time_t optimizedTime;
+    time_t optimized2Time;
     size_t i;
 #define N_STRUCT 50
     SomeStruct x[N_STRUCT];
@@ -88,8 +105,16 @@ int main()
     }
     optimizedTime = time(NULL) - startTime;
 
-    printf("for %u trials, classicTime == %lu, optimizedTime == %lu\n",
-	   N_TRIALS, (unsigned long)classicTime, (unsigned long)optimizedTime);
+    startTime = time(NULL);
+    for(i = N_TRIALS; i; --i)
+    {
+	for_optimized2(&r, x, N_STRUCT);
+    }
+    optimized2Time = time(NULL) - startTime;
+
+    printf("for %u trials, classicTime == %lu, optimizedTime == %lu, optimized2Time == %lu\n",
+	   N_TRIALS, (unsigned long)classicTime, (unsigned long)optimizedTime,
+	   (unsigned long)optimized2Time);
 
     return 0;
 }
