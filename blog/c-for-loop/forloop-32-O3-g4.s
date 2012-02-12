@@ -32,14 +32,15 @@ for_classic:
 	pushl	%ebx			/* save %ebx; pr goes here */
 	.cfi_def_cfa_offset 20
 	.cfi_offset 3, -20
-	movl	28(%esp), %eax
-	movl	20(%esp), %ebx
-	testl	%eax, %eax
+	movl	28(%esp), %eax		/* move n to %eax */
+	movl	20(%esp), %ebx		/* move pr to %ebx */
+	testl	%eax, %eax		/* test n */
 
 	    /* ResultInit() got inlined */
 	movl	$0, (%ebx)
 	movl	$2147483647, 4(%ebx)
 	movl	$-2147483648, 8(%ebx)
+
 	je	.L2
 	movl	24(%esp), %ecx		/* %ecx is used to point to the array! */
 	movl	$-2147483648, %ebp	/* current pr->max in a register */
