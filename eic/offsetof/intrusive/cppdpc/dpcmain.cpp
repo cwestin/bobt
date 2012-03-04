@@ -10,11 +10,14 @@
 #endif
 
 #include <cassert>
+#include <cstdio>
+#include <cstring>
 
 #ifndef PHOENIX4CPP_COMPARE_H
 #include <compare.h>
 #endif
 
+#include "DiskPageCache.h"
 #include "HashMap.h"
 
 using namespace phoenix4cpp;
@@ -30,7 +33,7 @@ public:
     unsigned doo;
 
     unsigned long key;
-    HashMapMember hmMember;
+    HashMapMembership hmMembership;
 
     static void destroy(TestStruct *p);
 };
@@ -46,7 +49,7 @@ class TestStructFactory :
 {
 public:
     // virtuals from Factory
-    virtual HashMapMember *create();
+    virtual HashMapMembership *create();
 
     TestStructFactory(unsigned long key);
 
@@ -59,7 +62,7 @@ TestStructFactory::TestStructFactory(unsigned long k):
 {
 }
 
-HashMapMember *TestStructFactory::create()
+HashMapMembership *TestStructFactory::create()
 {
     TestStruct *pts = new TestStruct;
     pts->key = key;
@@ -67,13 +70,13 @@ HashMapMember *TestStructFactory::create()
     pts->voo = key;
     pts->doo = key;
 
-    return &pts->hmMember;
+    return &pts->hmMembership;
 }
 
 
 static void testHashMap()
 {
-    HashMap<TestStruct, offsetof(TestStruct, hmMember),
+    HashMap<TestStruct, offsetof(TestStruct, hmMembership),
         unsigned long, offsetof(TestStruct, key)> hashMap(
             0, 0, hashUnsignedLong, compareUnsignedLong, TestStruct::destroy);
     assert(hashMap.getCount() == 0);
@@ -133,14 +136,69 @@ static void testHashMap()
 }
 
 
+/* --------------------- test code for disk page cache ---------------------- */
+
+static void testDiskPageCache()
+{
+    DiskPageCache *pdpc = DiskPageCache::create("foo.dat", "r+", 7);
+    DiskPageCache::PageLock *pLock;
+    void *p;
+
+    unsigned long i;
+    const size_t pageSize = pdpc->getPageSize();
+
+    /* initialize the contents of the disk pages */
+    for(i = 0; i < 10; ++i)
+    {
+	pLock = pdpc->find(i);
+	p = pLock->getData();
+	memset(p, i, pageSize);
+	pLock->markDirty();
+	delete pLock;
+    }
+
+    /* modify the contents of the disk pages */
+    for(i = 0; i < 10; ++i)
+    {
+	pLock = pdpc->find(i);
+	p = pLock->getData();
+	memset(p, 9 - ((char *)p)[6], pageSize);
+	pLock->markDirty();
+	delete pLock;
+    }
+
+    /* modify the contents of the disk pages back to the original values */
+    for(i = 0; i < 10; ++i)
+    {
+	pLock = pdpc->find(i);
+	p = pLock->getData();
+	memset(p, 9 - ((char *)p)[10], pageSize);
+	pLock->markDirty();
+	delete pLock;
+    }
+
+    /* cycle buffers in and out of memory, checking their contents */
+    for(i = 13; i < 297; i += 3)
+    {
+	pLock = pdpc->find(i % 10);
+	p = pLock->getData();
+
+	if ((unsigned)(((char *)p)[10]) != i % 10)
+	    printf("incorrect value %d in page %lu\n", ((char *)p)[10], i % 10);
+
+	delete pLock;
+    }
+
+    delete pdpc;
+}
+
+
 /* --------------------------------- main ----------------------------------- */
 
 int main()
 {
-    /* test the HashMap */
     testHashMap();
+    testDiskPageCache();
 
     return 0;
 }
-
-

@@ -1,8 +1,8 @@
-/* Copyright 2011 Chris Westin.  All rights reserved. */
+/* Copyright 2012 Chris Westin.  All rights reserved. */
 /*
   Example for discussion from "Intrusive Data Structures," from
   "The Book of Brilliant Things:"
-  https://www.bookofbrilliantthings.com/eic/offsetof/intrusive-data-structures
+  https://www.bookofbrilliantthings.com/book/eic/offsetof/intrusive-data-structures
  */
 
 #ifndef BOBT_HASHMAP_H
@@ -20,19 +20,19 @@ namespace bookofbrilliantthings
 {
     using namespace phoenix4cpp;
 
-    HashMapMember::HashMapMember():
+    HashMapMembership::HashMapMembership():
         pNext(NULL),
         hashValue(0)
     {
     }
 
-    HashMapMember::~HashMapMember()
+    HashMapMembership::~HashMapMembership()
     {
         /*
           Don't allow this if it is still on the bucket chain
 
           As a design choice, we could instead keep a pointer to the current
-          owner HashMap in HashMapMember, and then we could remove this item
+          owner HashMap in HashMapMembership, and then we could remove this item
           here by using that pointer.  This implementation opted for keeping
           the intrusive member smaller and requiring that items be removed
           before being destroyed.
@@ -48,7 +48,7 @@ namespace bookofbrilliantthings
         void (*destroy)(void *)):
         nItems(0),
         avgBucket(ab),
-        memberOffset(mo),
+        membershipOffset(mo),
         keyOffset(ko),
         hashf(hash),
         cmpf(cmp),
@@ -93,15 +93,16 @@ namespace bookofbrilliantthings
 
     bool HashMapGeneric::remove(void *pI)
     {
-        HashMapMember *pMember = (HashMapMember *)(((char *)pI) + memberOffset);
-        const size_t iBucket = pMember->hashValue & (nBuckets - 1);
+        HashMapMembership *pMembership = (HashMapMembership *)
+	    (((char *)pI) + membershipOffset);
+        const size_t iBucket = pMembership->hashValue & (nBuckets - 1);
         Bucket *const pB = pBucket + iBucket;
-        for(HashMapMember **ppM = &pB->pList; *ppM; ppM = &(*ppM)->pNext)
+        for(HashMapMembership **ppM = &pB->pList; *ppM; ppM = &(*ppM)->pNext)
         {
-            if (*ppM == pMember)
+            if (*ppM == pMembership)
             {
-                *ppM = pMember->pNext;
-                pMember->pNext = NULL;
+                *ppM = pMembership->pNext;
+                pMembership->pNext = NULL;
                 --nItems;
 
                 return true;
@@ -111,7 +112,7 @@ namespace bookofbrilliantthings
               We can cut out early if we've passed the point we should have
               found it at.
             */
-            if ((*ppM)->hashValue > pMember->hashValue)
+            if ((*ppM)->hashValue > pMembership->hashValue)
                 break;
         }
 
@@ -144,7 +145,7 @@ namespace bookofbrilliantthings
               Find the elements on this list that go on the new
               second half of the bucket array.
             */
-            for(HashMapMember **ppM = &pNB->pList; *ppM;)
+            for(HashMapMembership **ppM = &pNB->pList; *ppM;)
             {
                 /*
                   This item should only move if it uses the uppermost bit of the
@@ -158,12 +159,12 @@ namespace bookofbrilliantthings
                 }
 
                 /* remove the item from it's current location */
-                HashMapMember *pM = *ppM;
+                HashMapMembership *pM = *ppM;
                 *ppM = (*ppM)->pNext;
 
                 findInBucket(pNB2, pM->hashValue,
-                             ((const char *)pM) - memberOffset + keyOffset, pM,
-                             NULL);
+                             ((const char *)pM) - membershipOffset + keyOffset,
+			     pM, NULL);
             }
         }
 
@@ -173,18 +174,18 @@ namespace bookofbrilliantthings
         nBuckets = newN;
     }
 
-    HashMapMember *HashMapGeneric::findInBucket(
+    HashMapMembership *HashMapGeneric::findInBucket(
         Bucket *pB, unsigned long hashValue, const void *pKey,
-        HashMapMember *pNew, Factory *pFactory)
+        HashMapMembership *pNew, Factory *pFactory)
     {
-        HashMapMember **ppM;
+        HashMapMembership **ppM;
 
         for(ppM = &pB->pList; *ppM; ppM = &(*ppM)->pNext)
         {
             if ((*ppM)->hashValue == hashValue)
             {
-                const void *pLeft =
-                    (const void *)(((char *)(*ppM)) - memberOffset + keyOffset);
+                const void *pLeft = (const void *)
+		    (((char *)(*ppM)) - membershipOffset + keyOffset);
                 int cmp = (*cmpf)(pLeft, pKey);
                 if (cmp == 0)
                     return *ppM;
@@ -229,12 +230,29 @@ namespace bookofbrilliantthings
         (*hashf)(&hash, pKey);
         unsigned long hashValue = hash.get();
         size_t iBucket = hashValue & (nBuckets - 1);
-        HashMapMember *pM = findInBucket(
+        HashMapMembership *pM = findInBucket(
             pBucket + iBucket, hashValue, pKey, NULL, pFactory);
 
         if (pM)
-            return (void *)(((char *)pM) - memberOffset);
+            return (void *)(((char *)pM) - membershipOffset);
         return NULL;
+    }
+
+    void HashMapGeneric::visit(VisitorUnknown *pVU)
+    {
+	size_t iBucket = nBuckets;
+	for(Bucket *pB = pBucket; iBucket; ++pB, --iBucket)
+	{
+	    for(HashMapMembership *pM = pB->pList; pM; pM = pM->pNext)
+	    {
+		bool b = pVU->visit(
+		    (Unknown *)(((char *)pM) - membershipOffset));
+
+		/* abort visit? */
+		if (!b)
+		    return;
+	    }
+	}
     }
 
     void HashMapGeneric::clear()
@@ -244,7 +262,7 @@ namespace bookofbrilliantthings
 
         for(pB = pBucket, i = nBuckets; i; ++pB, --i)
         {
-            HashMapMember *pM;
+            HashMapMembership *pM;
             while((pM = pB->pList))
             {
                 /* remove this one from the bucket */
@@ -252,7 +270,8 @@ namespace bookofbrilliantthings
                 pM->pNext = NULL;
                 --nItems;
 
-                (*destroyf)((void *)(((char *)pM) - memberOffset));
+		if (destroyf)
+		    (*destroyf)((void *)(((char *)pM) - membershipOffset));
             }
         }
     }

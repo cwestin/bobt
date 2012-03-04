@@ -17,7 +17,12 @@ clean:
 HashMap.o:	HashMap.cpp HashMap.h
 	$(CC) $(CFLAGS) -c $<
 
-dpcmain:	dpcmain.cpp HashMap.o \
+DiskPageCache.o:	DiskPageCache.cpp DiskPageCache.h HashMap.h $(INCLUDE)/DoublyLinked.h
+	$(CC) $(CFLAGS) -c $<
+
+dpcmain:	dpcmain.cpp DiskPageCache.o HashMap.o \
 	$(INCLUDE)/DoublyLinked.h \
-	$(INCLUDE)/hash.h $(LIBRARY)
-	$(CC) $(CFLAGS) -o $@ $< HashMap.o -Wl,-l:$(LIBRARY)
+	$(INCLUDE)/compare.h \
+	$(INCLUDE)/hash.h \
+	$(LIBRARY)
+	$(CC) $(CFLAGS) -o $@ $< DiskPageCache.o HashMap.o -Wl,-l:$(LIBRARY)
