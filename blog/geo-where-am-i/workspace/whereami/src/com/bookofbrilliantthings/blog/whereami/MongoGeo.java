@@ -11,18 +11,46 @@ import com.mongodb.Mongo;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 
+/**
+ * MongoGeo establishes and maintains database access handles for a simple
+ * geospatial database that can be used to find regions that contain specified points.
+ * MongoDB is used for persistence.
+ * 
+ * The query mechanism requires the use of a property named MongoGeo.POLY to hold
+ * a list of points represented as an array of two element arrays representing
+ * latitude and longitude of a polygon, and MongoGeo.CENTROID to hold a two element array
+ * that is the he centroid of the polygon.  (This is currently required to be pre-computed,
+ * but a future enhancement could be to do this if it is not supplied.)
+ * 
+ * There are methods for loading the database, as well as methods for querying it.
+ * 
+ * @author cwestin
+ * https://github.com/cwestin/bobt/blob/master/blog/geo-where-am-i/workspace/whereami/src/com/bookofbrilliantthings/blog/whereami/MongoGeo.java
+ */
 class MongoGeo
 {
+	// constants for the database schema
 	final public static String CENTROID = "centroid";
 	final public static String POLY = "poly";
 	
+	// constants for the db and collection names
 	final private static String DBNAME = "geobox";
 	final private static String COLLECTIONNAME = "bounds";
 
+	// max number of polygons to request from query and check
+	final private static int N_TO_CHECK = 10;
+	
+	// handles to the database
 	private Mongo mongo;
 	private DB geoDb;
 	private DBCollection boundsCollection;
 	
+	/**
+	 * Set up the connection to MongoDB
+	 * 
+	 * @param hostName the host to use
+	 * @param port the port to use
+	 */
 	public MongoGeo(String hostName, int port)
 	{
 		// connect to MongoDB
@@ -43,6 +71,10 @@ class MongoGeo
 		boundsCollection = geoDb.getCollection(COLLECTIONNAME);
 	}
 	
+	/**
+	 * Close the connection to MongoDB. It is an error to issue any more requests
+	 * to this class after calling this.
+	 */
 	public void close()
 	{
 		boundsCollection = null;
@@ -51,6 +83,10 @@ class MongoGeo
 		mongo = null;
 	}
 
+	/**
+	 * Create the geospatial index required for future queries. Should only be
+	 * used once.
+	 */
 	public void createGeoIndex()
 	{
 		// create the geospatial index we need
@@ -59,6 +95,16 @@ class MongoGeo
 		boundsCollection.createIndex(boundsIndex);
 	}
 
+	/**
+	 * Insert a polygonally bounded region into the geo database.
+	 * 
+	 * This does some lightweight checking, making sure that the object has
+	 * a CENTROID field made up of a two-item list (a point), and a POLY field
+	 * made up of a list (should be points).  Other than that, the application is
+	 * free to use any other fields for any other purpose.
+	 * 
+	 * @param dbObject the database object to insert
+	 */
 	public void insertRegion(DBObject dbObject)
 	{
 		/*
@@ -83,6 +129,17 @@ class MongoGeo
 		boundsCollection.insert(dbObject);
 	}
 
+	/**
+	 * Test to see if the specified point is contained by the given polygon.
+	 * 
+	 * The polygon is represented as a list of points in the POLY field.
+	 * 
+	 * @param x the x co-ordinate of the point
+	 * @param y the y co-ordinate of the point
+	 * @param polyList the polygon
+	 * @return true if the point is within the polygon, false otherwise; if the point is
+	 *   on the boundary, may return either
+	 */
 	private static boolean pointInPoly(double x, double y, BasicDBList polyList)
 	{
 		/*
@@ -121,6 +178,18 @@ class MongoGeo
 		return oddNodes;
 	}
 	
+	/**
+	 * Query the geo database to find a polygon containing the specified point.
+	 * 
+	 * Assumes the polygons don't overlap.  Queries for a small set of polygons whose
+	 * centroids are nearest the given point, ordered by distance.  Then tests each of
+	 * those to see if the given point is within them.  The tests stop at the first
+	 * containing polygon, and its original containing database object is returned.
+	 * 
+	 * @param lat the latitude of the point
+	 * @param lng the longitude of the point
+	 * @return the database object with the containing polygon, if one is found, null otherwise
+	 */
 	public DBObject findContaining(double lat, double lng)
 	{
 		// these are cleared by close()
@@ -136,7 +205,7 @@ class MongoGeo
 		nearPoint.add(lng);
 		
 		geoNearCmd.put("near", nearPoint);
-		geoNearCmd.put("num", 10); // max number to return
+		geoNearCmd.put("num", N_TO_CHECK); // max number to return
 		
 		final DBObject cmdResult = geoDb.command(geoNearCmd);
 		final BasicDBList resultsList = (BasicDBList)cmdResult.get("results");

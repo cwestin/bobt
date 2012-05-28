@@ -22,12 +22,25 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.MultiPolygon;
 import com.vividsolutions.jts.geom.Point;
 
+/**
+ * Simple command-line application for loading a GIS data file using GeoTools into
+ * MongoDB.
+ * 
+ * @author cwestin
+ * https://github.com/cwestin/bobt/blob/master/blog/geo-where-am-i/workspace/whereami/src/com/bookofbrilliantthings/blog/whereami/DataLoader.java
+ */
 public class DataLoader
 {
+	/**
+	 * Print schema information available from a feature source.  Prints out
+	 * the name and type names for attributes on the feature source's schema.
+	 * 
+	 * @param printStream where to print the information
+	 * @param featureSource the feature source to examine
+	 */
 	static void printSchema(PrintStream printStream, SimpleFeatureSource featureSource)
 	{
 		final SimpleFeatureType featureType = featureSource.getSchema();
-		printStream.println("FID\t");
 		for (int i = 0; i < featureType.getAttributeCount(); i++)
 		{
 			final AttributeDescriptor attrDesc = featureType.getDescriptor(i);
@@ -71,7 +84,7 @@ public class DataLoader
 			final SimpleFeatureSource featureSource = dataStore.getFeatureSource(typeName0);
 
 			// print out the list of features so we can see what's there
-			printSchema(System.out, featureSource);
+			//printSchema(System.out, featureSource);
 
 			final SimpleFeatureCollection collection = featureSource.getFeatures();
 			final SimpleFeatureIterator iterator = collection.features();
@@ -84,6 +97,7 @@ public class DataLoader
 
 			try
 			{
+				// Iterate over all the features, extracting the data that we want.
 				while(iterator.hasNext())
 				{
 					SimpleFeature feature = iterator.next();

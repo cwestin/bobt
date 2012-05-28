@@ -4,13 +4,22 @@ import java.io.PrintStream;
 
 import com.mongodb.DBObject;
 
+/**
+ * Simple command-line application for testing "Where am I?" queries using MongoGeo.java
+ * 
+ * @author cwestin
+ * https://github.com/cwestin/bobt/blob/master/blog/geo-where-am-i/workspace/whereami/src/com/bookofbrilliantthings/blog/whereami/DataLoader.java
+ */
 public class LocationFinder
 {
-	public static void printLocation(PrintStream printStream, DBObject dbObject)
-	{
-		
-	}
-	
+	/**
+	 * Issue a query to find out where the given location is, and print out the result.
+	 * 
+	 * @param printStream where to print the result to
+	 * @param mongoGeo a handle to the geo database
+	 * @param lat latitude of the location
+	 * @param lng longitude of the location
+	 */
 	public static void testLocation(PrintStream printStream, MongoGeo mongoGeo,
 			double lat, double lng)
 	{
@@ -31,7 +40,7 @@ public class LocationFinder
 	{
 		MongoGeo mongoGeo = new MongoGeo("localhost", 27017);
 		
-		// geoquery for some points
+		// query for some points
 		testLocation(System.out, mongoGeo, -82, 40); // somewhere in OH? TODO 
 		testLocation(System.out, mongoGeo, -83, 41); // somewhere in OH? TODO 
 		testLocation(System.out, mongoGeo, -84, 42); // somewhere in OH? TODO 
