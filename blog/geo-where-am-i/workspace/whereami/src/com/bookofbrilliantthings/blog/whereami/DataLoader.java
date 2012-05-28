@@ -27,6 +27,7 @@ import com.vividsolutions.jts.geom.Point;
  * MongoDB.
  * 
  * @author cwestin
+ * https://www.bookofbrilliantthings.com/blog/finding-your-location-with-geospatial-queries
  * https://github.com/cwestin/bobt/blob/master/blog/geo-where-am-i/workspace/whereami/src/com/bookofbrilliantthings/blog/whereami/DataLoader.java
  */
 public class DataLoader
@@ -118,7 +119,21 @@ public class DataLoader
 					final Coordinate coordinates[] = multiPolygon.getCoordinates();
 					assert coordinates.length == nPoints;
 					
-					// prepare a database object for insertion into MongoDB
+					/*
+					 * Prepare a database object for insertion into MongoDB.
+					 * 
+					 * We'll create objects that look like this:
+					 * {
+					 *   stateAbbr: "AZ",
+					 *   stateName: "Arizona",
+					 *   country: "USA",
+					 *   centroid: [<lng>, <lat>],
+					 *   poly: [[<lng1>, <lat1>], [<lng2>, <lat2>], ... ]
+					 * }
+					 * 
+					 * Note the points store (longitude, latitude) because those come out as
+					 * (x, y) from the co-ordinate handling below.
+					 */
 					final BasicDBObject boundObj = new BasicDBObject();
 					boundObj.put("stateAbbr", stateAbbr);
 					boundObj.put("stateName", stateName);

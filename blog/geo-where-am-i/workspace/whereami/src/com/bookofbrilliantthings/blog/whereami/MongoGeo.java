@@ -25,6 +25,7 @@ import com.mongodb.WriteConcern;
  * There are methods for loading the database, as well as methods for querying it.
  * 
  * @author cwestin
+ * https://www.bookofbrilliantthings.com/blog/finding-your-location-with-geospatial-queries
  * https://github.com/cwestin/bobt/blob/master/blog/geo-where-am-i/workspace/whereami/src/com/bookofbrilliantthings/blog/whereami/MongoGeo.java
  */
 class MongoGeo
@@ -186,11 +187,11 @@ class MongoGeo
 	 * those to see if the given point is within them.  The tests stop at the first
 	 * containing polygon, and its original containing database object is returned.
 	 * 
-	 * @param lat the latitude of the point
 	 * @param lng the longitude of the point
+	 * @param lat the latitude of the point
 	 * @return the database object with the containing polygon, if one is found, null otherwise
 	 */
-	public DBObject findContaining(double lat, double lng)
+	public DBObject findContaining(double lng, double lat)
 	{
 		// these are cleared by close()
 		assert boundsCollection != null;
@@ -201,8 +202,8 @@ class MongoGeo
 		geoNearCmd.put("geoNear", COLLECTIONNAME); // geoNear on COLLECTIONNAME
 		
 		final BasicDBList nearPoint = new BasicDBList();
-		nearPoint.add(lat);
 		nearPoint.add(lng);
+		nearPoint.add(lat);
 		
 		geoNearCmd.put("near", nearPoint);
 		geoNearCmd.put("num", N_TO_CHECK); // max number to return
@@ -218,7 +219,7 @@ class MongoGeo
 			final BasicDBList polyList = (BasicDBList)resultObj.get("poly");
 			
 			// test to see if the point is inside the poly
-			if (pointInPoly(lat, lng, polyList))
+			if (pointInPoly(lng, lat, polyList))
 				return resultObj;
 		}
 

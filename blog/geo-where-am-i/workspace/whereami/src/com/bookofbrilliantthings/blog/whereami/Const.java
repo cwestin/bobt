@@ -4,6 +4,7 @@ package com.bookofbrilliantthings.blog.whereami;
  * Shared constants for the DataLoader and LocationFinder applications.
  * 
  * @author cwestin
+ * https://www.bookofbrilliantthings.com/blog/finding-your-location-with-geospatial-queries
  * https://github.com/cwestin/bobt/blob/master/blog/geo-where-am-i/workspace/whereami/src/com/bookofbrilliantthings/blog/whereami/Const.java
  */
 public class Const
