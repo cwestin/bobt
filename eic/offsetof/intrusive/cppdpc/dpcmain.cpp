@@ -18,11 +18,43 @@
 #endif
 
 #include "DiskPageCache.h"
+
+#include "DoublyLinked.h"
 #include "HashMap.h"
 
 using namespace phoenix4cpp;
 using namespace bookofbrilliantthings;
 
+/* ---------------------- test code for DoublyLinked ------------------------ */
+class TestItem
+{
+public:
+    unsigned x;
+
+    DoublyLinkedMembership dlMembership;
+};
+
+
+static void testDoublyLinked()
+{
+    DoublyLinkedList<TestItem, offsetof(TestItem, dlMembership)> list;
+
+    unsigned i;
+    for(i = 10; i > 0; --i)
+    {
+        TestItem *pItem = new TestItem;
+        pItem->x = i;
+        list.prepend(pItem);
+    }
+
+    TestItem *pItem;
+    for(pItem = list.getLast(), i = 10; pItem;
+        --i, pItem = list.getPrevious(pItem))
+    {
+        assert(pItem->x == i);
+    }
+    assert(i == 0); // we saw them all
+}
 
 /* ------------------------- test code for HashMap -------------------------- */
 
@@ -150,43 +182,43 @@ static void testDiskPageCache()
     /* initialize the contents of the disk pages */
     for(i = 0; i < 10; ++i)
     {
-	pLock = pdpc->find(i);
-	p = pLock->getData();
-	memset(p, i, pageSize);
-	pLock->markDirty();
-	delete pLock;
+        pLock = pdpc->find(i);
+        p = pLock->getData();
+        memset(p, i, pageSize);
+        pLock->markDirty();
+        delete pLock;
     }
 
     /* modify the contents of the disk pages */
     for(i = 0; i < 10; ++i)
     {
-	pLock = pdpc->find(i);
-	p = pLock->getData();
-	memset(p, 9 - ((char *)p)[6], pageSize);
-	pLock->markDirty();
-	delete pLock;
+        pLock = pdpc->find(i);
+        p = pLock->getData();
+        memset(p, 9 - ((char *)p)[6], pageSize);
+        pLock->markDirty();
+        delete pLock;
     }
 
     /* modify the contents of the disk pages back to the original values */
     for(i = 0; i < 10; ++i)
     {
-	pLock = pdpc->find(i);
-	p = pLock->getData();
-	memset(p, 9 - ((char *)p)[10], pageSize);
-	pLock->markDirty();
-	delete pLock;
+        pLock = pdpc->find(i);
+        p = pLock->getData();
+        memset(p, 9 - ((char *)p)[10], pageSize);
+        pLock->markDirty();
+        delete pLock;
     }
 
     /* cycle buffers in and out of memory, checking their contents */
     for(i = 13; i < 297; i += 3)
     {
-	pLock = pdpc->find(i % 10);
-	p = pLock->getData();
+        pLock = pdpc->find(i % 10);
+        p = pLock->getData();
 
-	if ((unsigned)(((char *)p)[10]) != i % 10)
-	    printf("incorrect value %d in page %lu\n", ((char *)p)[10], i % 10);
+        if ((unsigned)(((char *)p)[10]) != i % 10)
+            printf("incorrect value %d in page %lu\n", ((char *)p)[10], i % 10);
 
-	delete pLock;
+        delete pLock;
     }
 
     delete pdpc;
@@ -197,6 +229,7 @@ static void testDiskPageCache()
 
 int main()
 {
+    testDoublyLinked();
     testHashMap();
     testDiskPageCache();
 

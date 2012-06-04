@@ -8,7 +8,7 @@
   functionality.  There is a hash table keyed on pageId, used for holding
   the pages that are currently cached, and there is a doubly linked
   list used for managing the replacement policy.
-	
+        
   For a description of the page replacement policy, see the disk page
   cache header file.
 
@@ -70,45 +70,45 @@ public:
 
     struct Page
     {
-	unsigned long pageId; /* the pageId for this page */
-	unsigned flag; enum
-	{
-	    FDIRTY = 0x0001, /* page is dirty */
-	};
+        unsigned long pageId; /* the pageId for this page */
+        unsigned flag; enum
+        {
+            FDIRTY = 0x0001, /* page is dirty */
+        };
 
-	unsigned nLocks;  /* a reference count; page locks held on this page */
+        unsigned nLocks;  /* a reference count; page locks held on this page */
 
-	DiskPageCache_i *pdpc; /* pointer back to the cache implementation */
-	HashMapMembership hmm; /* membership in the cache's page hash table */
-	DoublyLinkedMembership link; /* membership on the mfu or free list */
+        DiskPageCache_i *pdpc; /* pointer back to the cache implementation */
+        HashMapMembership hmm; /* membership in the cache's page hash table */
+        DoublyLinkedMembership link; /* membership on the mfu or free list */
 
-	enum { SIZE = 2048 }; /* size of a page */
-	char buf[SIZE]; /* the actual page content (not aligned) */
+        enum { SIZE = 2048 }; /* size of a page */
+        char buf[SIZE]; /* the actual page content (not aligned) */
     };
 
     class PageFactory :
-	public HashMapGeneric::Factory
+        public HashMapGeneric::Factory
     {
     public:
-	// virtuals from HashMap::Factory
-	virtual HashMapMembership *create();
+        // virtuals from HashMap::Factory
+        virtual HashMapMembership *create();
 
-	PageFactory(DiskPageCache_i *pdpc, unsigned long pageId);
-	unsigned long pageId;
-	DiskPageCache_i *pdpc;
+        PageFactory(DiskPageCache_i *pdpc, unsigned long pageId);
+        unsigned long pageId;
+        DiskPageCache_i *pdpc;
     };
 
     class PageLock_i :
-	public DiskPageCache::PageLock
+        public DiskPageCache::PageLock
     {
     public:
-	// virtuals from PageLock
-	virtual ~PageLock_i();
-	virtual void *getData() const;
-	virtual void markDirty();
+        // virtuals from PageLock
+        virtual ~PageLock_i();
+        virtual void *getData() const;
+        virtual void markDirty();
 
-	Page *pPage; /* the locked page */
-	DoublyLinkedMembership locksLink;/* membership on a list of all locks */
+        Page *pPage; /* the locked page */
+        DoublyLinkedMembership locksLink;/* membership on a list of all locks */
     };
 
 
@@ -117,13 +117,13 @@ public:
       Writes SIZE zeroes to [fp] at the current position.  Used
       for initializing new pages at the end of a file.
     */
-	
+        
     FILE *fp; /* the opened file */
     size_t fileSize; /* how big the file is currently (in bytes) */
     unsigned long maxPages; /* the maximum size of the cache, in pages */
 
     typedef HashMap<Page, offsetof(Page, hmm), unsigned long,
-	    offsetof(Page, pageId)> PageMapType;
+            offsetof(Page, pageId)> PageMapType;
     PageMapType pageMap;
     DoublyLinkedList<Page, offsetof(Page,  link)> mfu;
                /* age list: infrequently used items drift right (to the end) */
@@ -131,11 +131,11 @@ public:
                                  /* list of all locks held, for invalidation */
 
     class PageWriter :
-	public PageMapType::Visitor
+        public PageMapType::Visitor
     {
     public:
-	// virtuals from PageMapType::Visitor
-	virtual bool visit(Page *pPage);
+        // virtuals from PageMapType::Visitor
+        virtual bool visit(Page *pPage);
     };
     static PageWriter pageWriter; /* we only need one of these */
 
@@ -182,9 +182,9 @@ HashMapMembership *DiskPageCache_i::PageFactory::create()
 
     /* load the page */
     fseek(pPage->pdpc->fp, pPage->pageId * DiskPageCache_i::Page::SIZE,
-	  SEEK_SET);
+          SEEK_SET);
     fread(pPage->buf, sizeof(char), DiskPageCache_i::Page::SIZE,
-	  pPage->pdpc->fp);
+          pPage->pdpc->fp);
 
     /* put the new page at the head (left) of the mfu list */
     pPage->pdpc->mfu.prepend(pPage);
@@ -200,9 +200,9 @@ bool DiskPageCache_i::PageWriter::visit(Page *pPage)
     */
     if (pPage->flag & Page::FDIRTY)
     {
-	fseek(pPage->pdpc->fp, pPage->pageId * Page::SIZE, SEEK_SET);
-	fwrite(pPage->buf, sizeof(char), Page::SIZE, pPage->pdpc->fp);
-	pPage->flag &= ~Page::FDIRTY;
+        fseek(pPage->pdpc->fp, pPage->pageId * Page::SIZE, SEEK_SET);
+        fwrite(pPage->buf, sizeof(char), Page::SIZE, pPage->pdpc->fp);
+        pPage->flag &= ~Page::FDIRTY;
     }
 
     /* continue with the visit */
@@ -215,15 +215,15 @@ DiskPageCache_i::PageWriter DiskPageCache_i::pageWriter;
 void *DiskPageCache_i::PageLock_i::getData() const
 {
     if (!pPage)
-	return NULL; /* cache has been destroyed */
-	
+        return NULL; /* cache has been destroyed */
+        
     return pPage->buf;
 }
 
 void DiskPageCache_i::PageLock_i::markDirty()
 {
     if (!pPage)
-	return; /* cache has been destroyed */
+        return; /* cache has been destroyed */
 
     pPage->flag |= DiskPageCache_i::Page::FDIRTY;
 }
@@ -231,7 +231,7 @@ void DiskPageCache_i::PageLock_i::markDirty()
 DiskPageCache_i::PageLock_i::~PageLock_i()
 {
     if (!pPage)
-	return; /* cache has been destroyed */
+        return; /* cache has been destroyed */
 
     /* the page is no longer locked */
     --pPage->nLocks;
@@ -256,72 +256,82 @@ DiskPageCache::PageLock *DiskPageCache_i::find(unsigned long pageId)
     */
     if (pageId > fileSize / DiskPageCache_i::Page::SIZE)
     {
-	/* go to the current end of the file */
-	fseek(fp, fileSize, SEEK_SET);
+        /* go to the current end of the file */
+        fseek(fp, fileSize, SEEK_SET);
 
-	/*
-	  Write out pages up to and including the requested page.  This
-	  has the handy side-effect of zeroing those pages, so there won't
-	  be garbage anywhere the user hasn't written.
-	*/
-	while(pageId > fileSize / DiskPageCache_i::Page::SIZE)
-	{
-	    DiskPageCache_i::zeroPage(fp);
-	    fileSize += DiskPageCache_i::Page::SIZE;
-	}
+        /*
+          Write out pages up to and including the requested page.  This
+          has the handy side-effect of zeroing those pages, so there won't
+          be garbage anywhere the user hasn't written.
+        */
+        while(pageId > fileSize / DiskPageCache_i::Page::SIZE)
+        {
+            DiskPageCache_i::zeroPage(fp);
+            fileSize += DiskPageCache_i::Page::SIZE;
+        }
     }
 
     /* look for the page in the cache */
     PageFactory pf(this, pageId);
     Page *pFound = (Page *)pageMap.find(&pageId, &pf);
     if (!pFound)
-	return(NULL);
+        return(NULL);
 
     /*
       For a page hit, we always move the page one place to the left on
       the mfu list, bringing it one place closer to the head of the
       list.  Note that it might already be at the head of the list, in
       which case we do nothing; we detect this by a lack of previous
-      member.
+      member. (The PageFactory places new pages at the head of the list, so
+      those won't get moved here.)
     */
-    Page *pLast = mfu.getLast();
-    if (pLast)
+    Page *pPrevious = mfu.getPrevious(pFound);
+    if (pPrevious)
     {
-	mfu.remove(pFound);
-	mfu.addBefore(pFound, pLast);
+        mfu.remove(pFound);
+        mfu.addBefore(pFound, pPrevious);
     }
 
-    /* boot a page if we're over the maximum size */
-    if (pageMap.getCount() > maxPages)
+    /* evict a page if we're at the maximum size */
+    if (pageMap.getCount() >= maxPages)
     {
-	/*
-	  Look for the least recently used page that is not locked.  To
-	  find a least recently used page, we start at the end (the
-	  far right) of the mfu list and work our way left until we find
-	  an unlocked page.
-	*/
-        Page *pBoot;
-	for(pBoot = mfu.getLast(); pBoot; pBoot = mfu.getPrevious(pBoot))
-	{
-	    if (pBoot->nLocks)
-		continue;
+        /*
+          Look for the least recently used page that is not locked.  To
+          find a least recently used page, we start at the end (the
+          far right) of the mfu list and work our way left until we find
+          an unlocked page.
 
-	    DiskPageCache_i::pageWriter.visit(pBoot);
+          Evicting this will make sure we have an empty slot available for
+          the next request.
 
-	    /*
-	      Remove this page from the mfu list and the hash map.  Place it
-	      on the free list.
-	    */
-	    mfu.remove(pBoot);
-	    pageMap.remove(pBoot);
-	    free.append(pBoot);
+          LATER
+          We might try to be more clever, and be prepared to evict this
+          and other pages by writing them now, so that we have non-dirty
+          older pages ready to evict if we need them. For now, we just assume
+          the page's age is an indicator that there's no need for it anymore.
+        */
+        Page *pEvict;
+        for(pEvict = mfu.getLast(); pEvict; pEvict = mfu.getPrevious(pEvict))
+        {
+            if (pEvict->nLocks)
+                continue;
 
-	    /*
-	      We successfully booted a page, so we can stop looking for one
-	      to boot.
-	    */
-	    break;
-	}
+            DiskPageCache_i::pageWriter.visit(pEvict);
+
+            /*
+              Remove this page from the mfu list and the hash map.  Place it
+              on the free list.
+            */
+            mfu.remove(pEvict);
+            pageMap.remove(pEvict);
+            free.append(pEvict);
+
+            /*
+              We successfully evicted a page, so we can stop looking for one
+              to evict.
+            */
+            break;
+        }
     }
 
     /* return the locked page */
@@ -357,17 +367,17 @@ DiskPageCache *DiskPageCache::create(
     */
     if (s && !strcmp(pMode, "r+"))
     {
-	fp = fopen(pFilename, "w");
-	DiskPageCache_i::zeroPage(fp);
-	fclose(fp);
-	sb.st_size = DiskPageCache_i::Page::SIZE;
+        fp = fopen(pFilename, "w");
+        DiskPageCache_i::zeroPage(fp);
+        fclose(fp);
+        sb.st_size = DiskPageCache_i::Page::SIZE;
     }
 
     /* try to open the requested file; if we can't, then return no cache */
     fp = fopen(pFilename, pMode);
     if (!fp)
-	return NULL;
-	
+        return NULL;
+        
     DiskPageCache_i *pdpc = new DiskPageCache_i(maxPages);
 
     pdpc->fp = fp;
@@ -378,13 +388,13 @@ DiskPageCache *DiskPageCache::create(
       list.
 
       We allocate one more than the maximum number of pages so there is
-      always a free one we can allocate before booting something.
+      always a free one we can allocate before evicting something.
     */
     pdpc->pPages = new DiskPageCache_i::Page[maxPages + 1];
     DiskPageCache_i::Page *pPage = pdpc->pPages;
     unsigned long i;
     for(i = maxPages; i; ++pPage, --i)
-	pdpc->free.append(pPage);
+        pdpc->free.append(pPage);
     
     return pdpc;
 }
@@ -399,10 +409,10 @@ DiskPageCache_i::~DiskPageCache_i()
     PageLock_i *pl;
     while((pl = locks.getFirst()))
     {
-	pl->pPage = NULL;
-	locks.remove(pl);
+        pl->pPage = NULL;
+        locks.remove(pl);
     }
-	
+        
     /* write out any dirty pages */
     flush();
 
