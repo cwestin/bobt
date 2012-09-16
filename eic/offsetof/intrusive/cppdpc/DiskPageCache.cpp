@@ -419,11 +419,9 @@ DiskPageCache_i::~DiskPageCache_i()
     /* close the file */
     fclose(fp);
 
-    /*
-      Clean up data structures.  Destruction of the hash table
-      destroys any members it contains via the destruction callback.
+    /* remove everything from the hash table so we can delete the pages */
+    pageMap.clear();
 
-      After that, we still have to free the array of pages.
-    */
+    /* free the array of pages */
     delete[] pPages;
 }

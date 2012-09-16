@@ -27,7 +27,7 @@ namespace bookofbrilliantthings
         HashMapMembership();
         ~HashMapMembership();
 
-	/* $$$ get rid of this? */
+        /* $$$ get rid of this? */
         class Factory
         {
         public:
@@ -66,15 +66,15 @@ namespace bookofbrilliantthings
 
         void *find(const void *pKey, Factory *pFactory);
 
-	class Unknown; // for a generic class instance pointer
-	class VisitorUnknown
-	{
-	public:
-	    virtual ~VisitorUnknown() {};
-	    virtual bool visit(Unknown *pU) = 0;
-	};
+        class Unknown; // for a generic class instance pointer
+        class VisitorUnknown
+        {
+        public:
+            virtual ~VisitorUnknown() {};
+            virtual bool visit(Unknown *pU) = 0;
+        };
 
-	void visit(VisitorUnknown *pVU);
+        void visit(VisitorUnknown *pVU);
 
         void clear();
 
@@ -119,14 +119,16 @@ namespace bookofbrilliantthings
 
         I *find(const K *pKey, Factory *pFactory);
 
-	class Visitor
-	{
-	public:
-	    virtual ~Visitor() {};
-	    virtual bool visit(I *pI) = 0;
-	};
+        class Visitor
+        {
+        public:
+            virtual ~Visitor() {};
+            virtual bool visit(I *pI) = 0;
+        };
 
-	void visit(Visitor *pV);
+        void visit(Visitor *pV);
+
+        void clear();
     };
 
 }
@@ -176,9 +178,15 @@ namespace bookofbrilliantthings
 
     template <class I, size_t tMembershipOffset, class K, size_t keyOffset>
     inline void HashMap<I, tMembershipOffset, K, keyOffset>::visit(
-	Visitor *pV)
+        Visitor *pV)
     {
-	HashMapGeneric::visit((VisitorUnknown *)pV);
+        HashMapGeneric::visit((VisitorUnknown *)pV);
+    }
+
+    template <class I, size_t tMembershipOffset, class K, size_t keyOffset>
+    inline void HashMap<I, tMembershipOffset, K, keyOffset>::clear()
+    {
+        HashMapGeneric::clear();
     }
 
 }
